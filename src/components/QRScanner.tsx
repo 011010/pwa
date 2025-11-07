@@ -18,6 +18,13 @@ export const QRScanner: React.FC<ScannerProps> = ({ onScanSuccess, onScanError }
   const readerRef = useRef<BrowserMultiFormatReader | null>(null);
 
   /**
+   * Track if a scan has been processed to prevent duplicate scans
+   * This prevents the scanner from processing the same code multiple times
+   * before the camera stops
+   */
+  const hasScannedRef = useRef<boolean>(false);
+
+  /**
    * Initialize scanner
    */
   useEffect(() => {
@@ -88,6 +95,9 @@ export const QRScanner: React.FC<ScannerProps> = ({ onScanSuccess, onScanError }
       readerRef.current = new BrowserMultiFormatReader();
     }
 
+    // Reset scan flag when starting a new scan session
+    hasScannedRef.current = false;
+
     setIsScanning(true);
     setError(null);
 
@@ -121,16 +131,35 @@ export const QRScanner: React.FC<ScannerProps> = ({ onScanSuccess, onScanError }
         videoRef.current,
         (result, error) => {
           if (result) {
+            // Check if we've already processed a scan to prevent duplicates
+            // This is critical because the scanner can detect the same code
+            // multiple times in consecutive video frames
+            if (hasScannedRef.current) {
+              console.log('[QR Scanner] Duplicate scan detected, ignoring');
+              return;
+            }
+
+            // Mark as scanned immediately to prevent duplicate processing
+            hasScannedRef.current = true;
+
             // Successful scan
             const code = result.getText();
             console.log('[QR Scanner] Scanned code:', code);
-            onScanSuccess(code);
+
+            // Stop scanning immediately before calling callback
+            // This prevents additional scans while the callback is processing
             stopScanning();
+
+            // Call the success callback after stopping
+            onScanSuccess(code);
           }
 
           if (error) {
-            // Log errors
-            console.error('[QR Scanner] Decode error:', error);
+            // Log errors (these are expected during normal scanning)
+            // Don't spam the console with NotFoundException
+            if (error.name !== 'NotFoundException') {
+              console.error('[QR Scanner] Decode error:', error);
+            }
           }
         }
       );
@@ -149,9 +178,22 @@ export const QRScanner: React.FC<ScannerProps> = ({ onScanSuccess, onScanError }
 
   /**
    * Stop scanning and release camera
+   * This function is critical for preventing memory leaks and ensuring
+   * the camera is properly released when scanning is complete or interrupted
    */
   const stopScanning = () => {
-    // Stop any video tracks directly
+    console.log('[QR Scanner] Stopping scanner...');
+
+    // Clear the reader reference to stop processing new frames
+    // Note: BrowserMultiFormatReader doesn't have a reset() method,
+    // so we rely on stopping the video stream and clearing the reference
+    if (readerRef.current) {
+      readerRef.current = null;
+      console.log('[QR Scanner] Reader reference cleared');
+    }
+
+    // Stop any video tracks directly to release camera
+    // This is the primary method to stop the scanner
     if (videoRef.current && videoRef.current.srcObject) {
       const stream = videoRef.current.srcObject as MediaStream;
       stream.getTracks().forEach(track => {
@@ -161,13 +203,8 @@ export const QRScanner: React.FC<ScannerProps> = ({ onScanSuccess, onScanError }
       videoRef.current.srcObject = null;
     }
 
-    // Clear the reader reference
-    if (readerRef.current) {
-      readerRef.current = null;
-      console.log('[QR Scanner] Stopped scanning and released camera');
-    }
-
     setIsScanning(false);
+    console.log('[QR Scanner] Scanner stopped and camera released');
   };
 
   /**
