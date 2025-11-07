@@ -22,25 +22,64 @@ export const Dashboard: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
 
-  // Fetch counts on mount
+  /**
+   * Fetch all equipment counts on mount
+   * Uses pagination to ensure we get the complete count of all equipment
+   * regardless of the total number of records
+   */
   useEffect(() => {
     const fetchCounts = async () => {
       try {
-        // Get ALL equipment to calculate proper counts
-        const allResponse = await equipmentService.getEquipmentAssignments({
-          per_page: 100,
+        // First, make a request with per_page=1 to get the total count from meta
+        const initialResponse = await equipmentService.getEquipmentAssignments({
+          per_page: 1,
+          page: 1,
         });
 
-        const allEquipment = allResponse.data;
+        const totalRecords = initialResponse.meta?.total || 0;
+
+        // If there are no records, set all counts to 0
+        if (totalRecords === 0) {
+          setAllCounts({ all: 0, in_use: 0, available: 0, retired: 0 });
+          return;
+        }
+
+        // Now fetch all records in one request (or multiple if needed)
+        // Most APIs support large per_page values, but we'll cap at 1000 per request
+        const perPageLimit = 1000;
+        let allEquipment: EquipmentAssignment[] = [];
+
+        // Calculate how many requests we need
+        const totalPages = Math.ceil(totalRecords / perPageLimit);
+
+        // Fetch all pages concurrently for better performance
+        const fetchPromises = [];
+        for (let page = 1; page <= totalPages; page++) {
+          fetchPromises.push(
+            equipmentService.getEquipmentAssignments({
+              per_page: perPageLimit,
+              page: page,
+            })
+          );
+        }
+
+        // Wait for all requests to complete
+        const responses = await Promise.all(fetchPromises);
+
+        // Combine all data
+        responses.forEach((response) => {
+          allEquipment = allEquipment.concat(response.data);
+        });
 
         // Calculate counts based on assignment status
         const counts = {
-          all: allEquipment.length,
+          all: totalRecords, // Use the total from meta for accuracy
           in_use: 0, // Has employee_name/email (assigned)
           available: 0, // No employee_name/email (not assigned)
           retired: 0, // Status BAJAS
         };
 
+        // Count each category
         allEquipment.forEach((assignment) => {
           const hasAssignment = assignment.metadata?.employee_name &&
                                 assignment.metadata?.employee_name.trim() !== '' &&
@@ -57,8 +96,11 @@ export const Dashboard: React.FC = () => {
         });
 
         setAllCounts(counts);
+        console.log('[Dashboard] Equipment counts loaded:', counts);
       } catch (error) {
-        console.error('Failed to fetch counts:', error);
+        console.error('[Dashboard] Failed to fetch equipment counts:', error);
+        // Set counts to 0 on error to avoid showing incorrect data
+        setAllCounts({ all: 0, in_use: 0, available: 0, retired: 0 });
       }
     };
 
