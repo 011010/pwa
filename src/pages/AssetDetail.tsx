@@ -1,15 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { assetsService } from '../services/assetsService';
+import { equipmentService } from '../services/equipmentService';
 import { useOfflineQueue } from '../hooks/useOfflineQueue';
 import { SignaturePad } from '../components/SignaturePad';
 import { BottomNav } from '../components/BottomNav';
-import type { Asset, AssetStatus } from '../types';
+import type { Asset, AssetStatus, EquipmentAssignment } from '../types';
 
 export const AssetDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
   const { queueOperation, isOnline } = useOfflineQueue();
   const [asset, setAsset] = useState<Asset | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -22,20 +24,74 @@ export const AssetDetail: React.FC = () => {
     comments: ''
   });
 
+  // Determine if we're viewing equipment assignment or regular asset
+  const isEquipmentRoute = location.pathname.startsWith('/equipment/');
+
+  // Convert EquipmentAssignment to Asset format
+  const convertEquipmentToAsset = (assignment: EquipmentAssignment): Asset => {
+    const hasAssignment = assignment.metadata?.employee_name &&
+                         assignment.metadata?.employee_name.trim() !== '' &&
+                         assignment.metadata?.employee_name !== 'N/A';
+    const isRetired = assignment.metadata?.equipment_status === 'BAJAS';
+
+    let status: AssetStatus = 'available';
+    if (isRetired) {
+      status = 'retired';
+    } else if (hasAssignment) {
+      status = 'in_use';
+    }
+
+    return {
+      id: assignment.id,
+      code: assignment.serial_number,
+      name: assignment.equipment,
+      model: assignment.model,
+      serial_number: assignment.serial_number,
+      status,
+      location: assignment.metadata?.employee_department || 'N/A',
+      category: assignment.metadata?.equipment_type ? String(assignment.metadata.equipment_type) : 'Unknown',
+      assigned_to: hasAssignment ? {
+        id: assignment.metadata?.employee_id || 0,
+        name: assignment.metadata?.employee_name || '',
+        email: assignment.metadata?.employee_email || '',
+        roles: [],
+        permissions: [],
+      } : undefined,
+      description: assignment.comments,
+      comments: assignment.comments,
+      created_at: assignment.metadata?.created_at || new Date().toISOString(),
+      updated_at: assignment.metadata?.updated_at || new Date().toISOString(),
+    };
+  };
+
   useEffect(() => {
     const fetchAsset = async () => {
+      if (!id) return;
+
       try {
-        const data = await assetsService.getAssetById(Number(id));
-        setAsset(data);
-        setFormData({ status: data.status, location: data.location, comments: data.comments || '' });
+        setIsLoading(true);
+
+        if (isEquipmentRoute) {
+          // Fetch from equipment-assignments endpoint
+          const equipmentData = await equipmentService.getEquipmentAssignmentById(Number(id));
+          const assetData = convertEquipmentToAsset(equipmentData);
+          setAsset(assetData);
+          setFormData({ status: assetData.status, location: assetData.location, comments: assetData.comments || '' });
+        } else {
+          // Fetch from regular assets endpoint
+          const data = await assetsService.getAssetById(Number(id));
+          setAsset(data);
+          setFormData({ status: data.status, location: data.location, comments: data.comments || '' });
+        }
       } catch (error) {
         console.error('Failed to fetch asset:', error);
+        setAsset(null);
       } finally {
         setIsLoading(false);
       }
     };
     fetchAsset();
-  }, [id]);
+  }, [id, isEquipmentRoute]);
 
   const handleUpdate = async () => {
     if (!asset) return;
@@ -96,9 +152,18 @@ export const AssetDetail: React.FC = () => {
 
   if (!asset) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen">
-        <h2 className="text-xl font-semibold text-gray-900 mb-2">Asset not found</h2>
-        <button onClick={() => navigate('/dashboard')} className="text-primary-600">Go back</button>
+      <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50">
+        <svg className="w-16 h-16 text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        <h2 className="text-xl font-semibold text-gray-900 mb-2">Equipment not found</h2>
+        <p className="text-gray-600 mb-4">The equipment you're looking for doesn't exist or has been removed.</p>
+        <button
+          onClick={() => navigate('/dashboard')}
+          className="bg-primary-600 text-white px-6 py-2 rounded-lg hover:bg-primary-700 transition-colors"
+        >
+          Go to Dashboard
+        </button>
       </div>
     );
   }
@@ -109,7 +174,18 @@ export const AssetDetail: React.FC = () => {
       <div className="bg-white shadow-sm sticky top-0 z-40">
         <div className="px-4 py-4">
           <div className="flex items-center">
-            <button onClick={() => navigate(-1)} className="mr-3 p-2 -ml-2 text-gray-600">
+            <button
+              onClick={() => {
+                // Navigate to appropriate page based on context
+                const prevPath = location.state?.from;
+                if (prevPath?.startsWith('/employee-equipment/')) {
+                  navigate(prevPath);
+                } else {
+                  navigate('/dashboard');
+                }
+              }}
+              className="mr-3 p-2 -ml-2 text-gray-600"
+            >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
