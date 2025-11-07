@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QR - HP Laptop 15-ef2500la</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            background: linear-gradient(135deg, #DC2626 0%, #991B1B 100%);
+            color: white;
+        }
+        .container {
+            background: white;
+            padding: 2rem;
+            border-radius: 1rem;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            text-align: center;
+            max-width: 400px;
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 0.5rem;
+            font-size: 1.5rem;
+        }
+        .equipment-info {
+            background: #f8f9fa;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin: 1rem 0;
+            color: #555;
+            text-align: left;
+        }
+        .equipment-info p {
+            margin: 0.5rem 0;
+            font-size: 0.9rem;
+        }
+        .equipment-info strong {
+            color: #333;
+        }
+        #qrcode {
+            margin: 1.5rem auto;
+            padding: 1rem;
+            background: white;
+            border-radius: 0.5rem;
+        }
+        .serial {
+            font-family: 'Courier New', monospace;
+            font-size: 1.2rem;
+            color: #DC2626;
+            font-weight: bold;
+            margin: 1rem 0;
+        }
+        .instructions {
+            color: #666;
+            font-size: 0.85rem;
+            margin-top: 1rem;
+            line-height: 1.6;
+        }
+        .badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 0.25rem;
+            font-size: 0.85rem;
+            font-weight: 600;
+            background: #10B981;
+            color: white;
+            margin-top: 0.5rem;
+        }
+        .employee-badge {
+            background: #3B82F6;
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            margin: 1rem 0;
+        }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <h1>💻 HP Laptop 15-ef2500la</h1>
+
+        <div class="badge">En Uso</div>
+
+        <div class="employee-badge">
+            <div style="font-size: 1.1rem; font-weight: bold;">👤 Paulina Cristobal</div>
+            <div style="font-size: 0.85rem; opacity: 0.9;">T&T</div>
+        </div>
+
+        <div class="equipment-info">
+            <p><strong>Equipo:</strong> Laptop HP</p>
+            <p><strong>Marca:</strong> HP</p>
+            <p><strong>Modelo:</strong> 15-ef2500la</p>
+            <p><strong>Serial:</strong> <span class="serial">5cd3425mxk</span></p>
+            <p><strong>Tipo:</strong> Computadora Portátil</p>
+            <p><strong>Email:</strong> paulina.cristobal@sekologistics.com</p>
+            <p><strong>Departamento:</strong> T&T</p>
+            <p><strong>Recibido:</strong> 15/09/2025</p>
+            <p><strong>Estado:</strong> Óptimas condiciones, sin detalles</p>
+        </div>
+
+        <div id="qrcode"></div>
+
+        <p class="instructions">
+            📱 Escanea este código QR con la app RAIS para ver todos los equipos asignados a <strong>Paulina Cristobal</strong>.
+        </p>
+    </div>
+
+    <script>
+        new QRCode(document.getElementById("qrcode"), {
+            text: "5cd3425mxk",
+            width: 256,
+            height: 256,
+            colorDark: "#000000",
+            colorLight: "#ffffff",
+            correctLevel: QRCode.CorrectLevel.H
+        });
+    </script>
+</body>
+</html>

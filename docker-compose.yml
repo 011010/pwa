@@ -1,0 +1,15 @@
+version: "3.9"
+
+services:
+  itam-pwa:
+    build: .
+    container_name: itam-pwa
+    ports:
+      - "5173:5173" # Puerto de desarrollo Vite
+    volumes:
+      - .:/app
+      - /app/node_modules
+    command: npm run dev
+    environment:
+      - CHOKIDAR_USEPOLLING=true
+      - VITE_API_URL=https://tu-api-filament.com/api

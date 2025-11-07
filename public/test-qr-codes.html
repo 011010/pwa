@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>QR Codes de Prueba - RAIS</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      padding: 20px;
+      min-height: 100vh;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      text-align: center;
+      color: white;
+      margin-bottom: 10px;
+      font-size: 2.5rem;
+    }
+
+    .subtitle {
+      text-align: center;
+      color: rgba(255, 255, 255, 0.9);
+      margin-bottom: 30px;
+      font-size: 1.1rem;
+    }
+
+    .instructions {
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      margin-bottom: 30px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    }
+
+    .instructions h2 {
+      color: #DC2626;
+      margin-bottom: 10px;
+    }
+
+    .instructions ol {
+      margin-left: 20px;
+      line-height: 1.8;
+    }
+
+    .instructions li {
+      margin-bottom: 8px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 30px;
+      margin-top: 20px;
+    }
+
+    .qr-card {
+      background: white;
+      border-radius: 15px;
+      padding: 30px;
+      text-align: center;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .qr-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 15px 40px rgba(0, 0, 0, 0.3);
+    }
+
+    .qr-card h3 {
+      color: #1f2937;
+      margin-bottom: 10px;
+      font-size: 1.3rem;
+    }
+
+    .qr-card .serial {
+      display: inline-block;
+      background: #DC2626;
+      color: white;
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-family: 'Courier New', monospace;
+      font-weight: bold;
+      margin-bottom: 20px;
+      font-size: 0.9rem;
+    }
+
+    .qr-card img {
+      width: 100%;
+      max-width: 250px;
+      height: auto;
+      border: 3px solid #e5e7eb;
+      border-radius: 10px;
+      padding: 10px;
+      background: white;
+    }
+
+    .note {
+      background: #fef3c7;
+      border-left: 4px solid #f59e0b;
+      padding: 15px;
+      margin-top: 10px;
+      border-radius: 5px;
+    }
+
+    .note strong {
+      color: #92400e;
+    }
+
+    @media print {
+      body {
+        background: white;
+        padding: 0;
+      }
+
+      .instructions {
+        display: none;
+      }
+
+      .qr-card {
+        break-inside: avoid;
+        page-break-inside: avoid;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🔍 QR Codes de Prueba</h1>
+    <p class="subtitle">Códigos QR para probar el escáner de RAIS</p>
+
+    <div class="instructions">
+      <h2>📱 Cómo usar estos QR codes:</h2>
+      <ol>
+        <li><strong>Opción 1:</strong> Abre esta página en tu computadora y escanea los QR codes desde tu teléfono</li>
+        <li><strong>Opción 2:</strong> Imprime esta página (Ctrl/Cmd + P) y escanea los códigos impresos</li>
+        <li><strong>Opción 3:</strong> Muestra un QR en una pantalla y escanéalo desde otro dispositivo</li>
+      </ol>
+
+      <div class="note">
+        <strong>⚠️ Nota:</strong> Estos son códigos de prueba. El escáner buscará equipos con estos números de serie en tu API. Si el equipo no existe, mostrará un error "Asset not found".
+      </div>
+    </div>
+
+    <div class="grid">
+      <div class="qr-card">
+        <h3>💻 Laptop Dell</h3>
+        <div class="serial">EQ-2024-001</div>
+        <img src="/qr-EQ-2024-001.png" alt="QR Code EQ-2024-001">
+      </div>
+
+      <div class="qr-card">
+        <h3>🖥️ Monitor Samsung</h3>
+        <div class="serial">EQ-2024-002</div>
+        <img src="/qr-EQ-2024-002.png" alt="QR Code EQ-2024-002">
+      </div>
+
+      <div class="qr-card">
+        <h3>⌨️ Teclado Logitech</h3>
+        <div class="serial">EQ-2024-003</div>
+        <img src="/qr-EQ-2024-003.png" alt="QR Code EQ-2024-003">
+      </div>
+
+      <div class="qr-card">
+        <h3>🖱️ Mouse HP</h3>
+        <div class="serial">EQ-2024-004</div>
+        <img src="/qr-EQ-2024-004.png" alt="QR Code EQ-2024-004">
+      </div>
+
+      <div class="qr-card">
+        <h3>🖨️ Impresora Canon</h3>
+        <div class="serial">EQ-2024-005</div>
+        <img src="/qr-EQ-2024-005.png" alt="QR Code EQ-2024-005">
+      </div>
+    </div>
+  </div>
+</body>
+</html>
