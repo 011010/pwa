@@ -241,7 +241,7 @@ export const AssetDetail: React.FC = () => {
               <div className="flex gap-3">
                 <button
                   onClick={handleUpdate}
-                  className="flex-1 bg-primary-600 hover:bg-primary-700 text-white font-medium py-3 rounded-lg transition-colors shadow-sm"
+                  className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 rounded-lg transition-colors shadow-sm"
                 >
                   Save Changes
                 </button>

@@ -235,7 +235,7 @@ export const Dashboard: React.FC = () => {
               onClick={() => setStatusFilter('all')}
               className={`px-4 py-2 rounded-lg font-medium text-sm whitespace-nowrap transition-colors ${
                 statusFilter === 'all'
-                  ? 'bg-primary-600 text-white'
+                  ? 'bg-blue-200 text-black'
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
               }`}
             >
@@ -332,7 +332,7 @@ export const Dashboard: React.FC = () => {
                         onClick={() => setCurrentPage(pageNum)}
                         className={`w-10 h-10 rounded-lg font-medium transition-colors ${
                           currentPage === pageNum
-                            ? 'bg-primary-600 text-white'
+                            ? 'bg-blue-200 text-black'
                             : 'bg-white border border-gray-300 hover:bg-gray-50'
                         }`}
                       >
