@@ -79,7 +79,7 @@ export const EmployeeEquipment: React.FC = () => {
         <div className="max-w-screen-xl mx-auto px-4 py-4">
           <div className="flex items-center gap-3 mb-2">
             <button
-              onClick={() => navigate(-1)}
+              onClick={() => navigate('/dashboard')}
               className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -123,7 +123,9 @@ export const EmployeeEquipment: React.FC = () => {
                 <AssetCard
                   key={assignment.id}
                   asset={convertToAsset(assignment)}
-                  onClick={() => navigate(`/equipment/${assignment.id}`)}
+                  onClick={() => navigate(`/equipment/${assignment.id}`, {
+                    state: { from: `/employee-equipment/${employeeId}` }
+                  })}
                 />
               ))}
             </div>

@@ -18,14 +18,20 @@ export const Scanner: React.FC = () => {
       // Find the equipment by code
       const asset = await assetsService.getAssetByCode(code);
 
+      // Clear loading state before navigation to prevent modal from staying open
+      setIsLoading(false);
+
       // If equipment has an assigned person, show all their equipment
       if (asset.assigned_to && asset.assigned_to.id) {
         navigate(`/employee-equipment/${asset.assigned_to.id}`, {
-          state: { employeeName: asset.assigned_to.name }
+          state: { employeeName: asset.assigned_to.name },
+          replace: true // Replace history to prevent back button issues
         });
       } else {
         // If not assigned, just show the equipment details
-        navigate(`/equipment/${asset.id}`);
+        navigate(`/equipment/${asset.id}`, {
+          replace: true // Replace history to prevent back button issues
+        });
       }
     } catch (err: any) {
       setError(err.message || 'Equipment not found');
