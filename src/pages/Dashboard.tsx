@@ -24,8 +24,8 @@ export const Dashboard: React.FC = () => {
 
   /**
    * Fetch all equipment counts on mount
-   * Uses pagination to ensure we get the complete count of all equipment
-   * regardless of the total number of records
+   * Uses pagination with API's maximum allowed per_page value (100)
+   * to efficiently count all equipment across multiple requests
    */
   useEffect(() => {
     const fetchCounts = async () => {
@@ -44,13 +44,15 @@ export const Dashboard: React.FC = () => {
           return;
         }
 
-        // Now fetch all records in one request (or multiple if needed)
-        // Most APIs support large per_page values, but we'll cap at 1000 per request
-        const perPageLimit = 1000;
+        // API has a maximum per_page limit of 100
+        // We'll fetch all pages concurrently for better performance
+        const perPageLimit = 100;
         let allEquipment: EquipmentAssignment[] = [];
 
         // Calculate how many requests we need
         const totalPages = Math.ceil(totalRecords / perPageLimit);
+
+        console.log(`[Dashboard] Fetching ${totalRecords} records across ${totalPages} pages...`);
 
         // Fetch all pages concurrently for better performance
         const fetchPromises = [];
@@ -70,6 +72,8 @@ export const Dashboard: React.FC = () => {
         responses.forEach((response) => {
           allEquipment = allEquipment.concat(response.data);
         });
+
+        console.log(`[Dashboard] Fetched ${allEquipment.length} equipment records`);
 
         // Calculate counts based on assignment status
         const counts = {
@@ -107,7 +111,10 @@ export const Dashboard: React.FC = () => {
     fetchCounts();
   }, []);
 
-  // Fetch assignments based on filter and page
+  /**
+   * Fetch assignments based on filter, page, and search query
+   * Uses server-side search to query across all pages when searching
+   */
   useEffect(() => {
     const fetchAssignments = async () => {
       try {
@@ -120,6 +127,13 @@ export const Dashboard: React.FC = () => {
           page: currentPage,
         };
 
+        // If there's a search query, add it to params
+        // This will search across ALL pages on the server
+        if (searchQuery.trim()) {
+          params.search = searchQuery.trim();
+          console.log(`[Dashboard] Searching for: "${searchQuery.trim()}"`);
+        }
+
         // If filtering by retired, use status parameter
         if (statusFilter === 'retired') {
           params.status = 'BAJAS';
@@ -129,26 +143,34 @@ export const Dashboard: React.FC = () => {
         const response = await equipmentService.getEquipmentAssignments(params);
 
         // Filter client-side based on assignment status
+        // (only when not searching, as search returns all matches)
         let filteredData = response.data;
 
-        if (statusFilter === 'in_use') {
-          // In use = has employee_name/email AND not retired
-          filteredData = response.data.filter(
-            (a) => a.metadata?.employee_name &&
-                   a.metadata?.employee_name.trim() !== '' &&
-                   a.metadata?.employee_name !== 'N/A' &&
-                   a.metadata?.equipment_status !== 'BAJAS'
-          );
-        } else if (statusFilter === 'available') {
-          // Available = no employee_name/email AND not retired
-          filteredData = response.data.filter(
-            (a) => (!a.metadata?.employee_name ||
-                    a.metadata?.employee_name.trim() === '' ||
-                    a.metadata?.employee_name === 'N/A') &&
-                   a.metadata?.equipment_status !== 'BAJAS'
-          );
+        if (!searchQuery.trim()) {
+          // Only apply client-side filtering when not searching
+          if (statusFilter === 'in_use') {
+            // In use = has employee_name/email AND not retired
+            filteredData = response.data.filter(
+              (a) => a.metadata?.employee_name &&
+                     a.metadata?.employee_name.trim() !== '' &&
+                     a.metadata?.employee_name !== 'N/A' &&
+                     a.metadata?.equipment_status !== 'BAJAS'
+            );
+          } else if (statusFilter === 'available') {
+            // Available = no employee_name/email AND not retired
+            filteredData = response.data.filter(
+              (a) => (!a.metadata?.employee_name ||
+                      a.metadata?.employee_name.trim() === '' ||
+                      a.metadata?.employee_name === 'N/A') &&
+                     a.metadata?.equipment_status !== 'BAJAS'
+            );
+          }
+          // For 'all' and 'retired', use API response as-is
+        } else {
+          // When searching, show all results regardless of filter
+          // The search already returns relevant matches
+          console.log(`[Dashboard] Found ${filteredData.length} search results`);
         }
-        // For 'all' and 'retired', use API response as-is
 
         setAssignments(filteredData);
 
@@ -157,7 +179,7 @@ export const Dashboard: React.FC = () => {
           setTotalPages(response.meta.last_page || 1);
         }
       } catch (error: any) {
-        console.error('Failed to fetch equipment assignments:', error);
+        console.error('[Dashboard] Failed to fetch equipment assignments:', error);
 
         // Show detailed error message
         const errorMsg = error.errors
@@ -169,22 +191,12 @@ export const Dashboard: React.FC = () => {
       }
     };
     fetchAssignments();
-  }, [statusFilter, currentPage]); // Re-fetch when status filter or page changes
+  }, [statusFilter, currentPage, searchQuery]); // Re-fetch when filter, page, or search changes
 
-  // Reset to page 1 when filter changes
+  // Reset to page 1 when filter or search query changes
   useEffect(() => {
     setCurrentPage(1);
-  }, [statusFilter]);
-
-  // Filter by search query - search in equipment, employee name, email, and serial number
-  const filteredAssignments = assignments.filter((assignment) =>
-    assignment.equipment.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    assignment.serial_number.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    (assignment.metadata?.employee_name && assignment.metadata.employee_name.toLowerCase().includes(searchQuery.toLowerCase())) ||
-    (assignment.metadata?.employee_email && assignment.metadata.employee_email.toLowerCase().includes(searchQuery.toLowerCase())) ||
-    (assignment.metadata?.employee_department && assignment.metadata.employee_department.toLowerCase().includes(searchQuery.toLowerCase())) ||
-    (assignment.name && assignment.name.toLowerCase().includes(searchQuery.toLowerCase()))
-  );
+  }, [statusFilter, searchQuery]);
 
   // Convert EquipmentAssignment to Asset format for AssetCard
   const convertToAsset = (assignment: EquipmentAssignment): Asset => {
@@ -329,10 +341,10 @@ export const Dashboard: React.FC = () => {
           <div className="flex justify-center items-center py-12">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600" />
           </div>
-        ) : filteredAssignments.length > 0 ? (
+        ) : assignments.length > 0 ? (
           <>
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {filteredAssignments.map((assignment) => (
+              {assignments.map((assignment) => (
                 <AssetCard
                   key={assignment.id}
                   asset={convertToAsset(assignment)}
