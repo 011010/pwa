@@ -43,3 +43,21 @@ coverage/
 .parcel-cache/
 .eslintcache
 nul
+
+.vercel
+
+# Documentation files (for internal use only)
+CLAUDE.md
+API_DOCUMENTATION.md
+
+# Scripts folder
+scripts/
+
+# Generated QR codes
+public/qr-*.html
+public/qr-*.png
+public/test-qr-codes.html
+
+# Company logos (for internal use)
+iosolutions1.png
+iosolutions2.png
