@@ -286,9 +286,6 @@ Place icon files in `public/icons/`:
 - Run `npm install` again
 - Check Node.js version (20+ required)
 
-## License
-
-[Your License]
 
 ## Support
 
