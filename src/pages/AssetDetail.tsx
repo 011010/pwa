@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { assetsService } from '../services/assetsService';
 import { equipmentService } from '../services/equipmentService';
+import { storageService, type StoredPhoto, type StoredSignature } from '../services/storageService';
 import { useOfflineQueue } from '../hooks/useOfflineQueue';
 import { SignaturePad } from '../components/SignaturePad';
 import { BottomNav } from '../components/BottomNav';
@@ -18,6 +19,10 @@ export const AssetDetail: React.FC = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [showSignature, setShowSignature] = useState(false);
   const [showPhoto, setShowPhoto] = useState(false);
+  const [photos, setPhotos] = useState<StoredPhoto[]>([]);
+  const [signatures, setSignatures] = useState<StoredSignature[]>([]);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [formData, setFormData] = useState<{ status: AssetStatus; location: string; comments: string }>({
     status: 'available',
     location: '',
@@ -64,6 +69,9 @@ export const AssetDetail: React.FC = () => {
     };
   };
 
+  /**
+   * Fetch asset data and load photos/signatures
+   */
   useEffect(() => {
     const fetchAsset = async () => {
       if (!id) return;
@@ -83,8 +91,14 @@ export const AssetDetail: React.FC = () => {
           setAsset(data);
           setFormData({ status: data.status, location: data.location, comments: data.comments || '' });
         }
+
+        // Load photos and signatures from local storage
+        const loadedPhotos = await storageService.getPhotos(Number(id));
+        const loadedSignatures = await storageService.getSignatures(Number(id));
+        setPhotos(loadedPhotos);
+        setSignatures(loadedSignatures);
       } catch (error) {
-        console.error('Failed to fetch asset:', error);
+        console.error('[AssetDetail] Failed to fetch asset:', error);
         setAsset(null);
       } finally {
         setIsLoading(false);
@@ -92,6 +106,22 @@ export const AssetDetail: React.FC = () => {
     };
     fetchAsset();
   }, [id, isEquipmentRoute]);
+
+  /**
+   * Show success message with auto-hide
+   */
+  const showSuccess = (message: string) => {
+    setSuccessMessage(message);
+    setTimeout(() => setSuccessMessage(null), 3000);
+  };
+
+  /**
+   * Show error message with auto-hide
+   */
+  const showError = (message: string) => {
+    setErrorMessage(message);
+    setTimeout(() => setErrorMessage(null), 5000);
+  };
 
   const handleUpdate = async () => {
     if (!asset) return;
@@ -102,43 +132,126 @@ export const AssetDetail: React.FC = () => {
         await queueOperation('update', asset.id, formData);
       }
       setIsEditing(false);
+      showSuccess('Asset updated successfully');
     } catch (error) {
-      console.error('Failed to update asset:', error);
+      console.error('[AssetDetail] Failed to update asset:', error);
+      showError('Failed to update asset');
     }
   };
 
+  /**
+   * Handle photo capture and save to IndexedDB
+   */
   const handlePhotoCapture = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !asset) return;
+
     try {
+      // Save photo to IndexedDB
+      const savedPhoto = await storageService.savePhoto(asset.id, file);
+
+      // Update local state
+      setPhotos(prev => [...prev, savedPhoto]);
+
+      // Close modal
+      setShowPhoto(false);
+
+      // Show success message
+      showSuccess('Photo saved successfully');
+
+      // Try to upload to server if online
       if (isOnline) {
-        await assetsService.uploadAssetPhoto(asset.id, file);
+        try {
+          await assetsService.uploadAssetPhoto(asset.id, file);
+          await storageService.markPhotoAsUploaded(savedPhoto.id);
+          console.log('[AssetDetail] Photo uploaded to server');
+        } catch (uploadError) {
+          console.error('[AssetDetail] Failed to upload photo to server:', uploadError);
+          // Photo is still saved locally, no need to show error
+        }
       } else {
         await queueOperation('photo', asset.id, { file });
       }
-      setShowPhoto(false);
     } catch (error) {
-      console.error('Failed to upload photo:', error);
+      console.error('[AssetDetail] Failed to save photo:', error);
+      showError('Failed to save photo');
     }
   };
 
+  /**
+   * Handle signature save to IndexedDB
+   */
   const handleSignatureSave = async (signature: string) => {
     if (!asset) return;
-    const signatureData = {
-      signature,
-      signed_by: 'Current User',
-      signed_at: new Date().toISOString(),
-      action: 'received',
-    };
+
     try {
-      if (isOnline) {
-        await assetsService.uploadAssetSignature(asset.id, signatureData);
-      } else {
-        await queueOperation('signature', asset.id, signatureData);
-      }
+      // Save signature to IndexedDB
+      const savedSignature = await storageService.saveSignature(
+        asset.id,
+        signature,
+        'Current User', // TODO: Get from auth context
+        'received'
+      );
+
+      // Update local state
+      setSignatures(prev => [...prev, savedSignature]);
+
+      // Close modal
       setShowSignature(false);
+
+      // Show success message
+      showSuccess('Signature saved successfully');
+
+      // Try to upload to server if online
+      if (isOnline) {
+        try {
+          const signatureData = {
+            signature,
+            signed_by: 'Current User',
+            signed_at: new Date().toISOString(),
+            action: 'received',
+          };
+          await assetsService.uploadAssetSignature(asset.id, signatureData);
+          await storageService.markSignatureAsUploaded(savedSignature.id);
+          console.log('[AssetDetail] Signature uploaded to server');
+        } catch (uploadError) {
+          console.error('[AssetDetail] Failed to upload signature to server:', uploadError);
+          // Signature is still saved locally, no need to show error
+        }
+      } else {
+        await queueOperation('signature', asset.id, { signature });
+      }
     } catch (error) {
-      console.error('Failed to save signature:', error);
+      console.error('[AssetDetail] Failed to save signature:', error);
+      showError('Failed to save signature');
+    }
+  };
+
+  /**
+   * Delete photo from storage
+   */
+  const handleDeletePhoto = async (photoId: string) => {
+    try {
+      await storageService.deletePhoto(photoId);
+      setPhotos(prev => prev.filter(p => p.id !== photoId));
+      showSuccess('Photo deleted');
+    } catch (error) {
+      console.error('[AssetDetail] Failed to delete photo:', error);
+      showError('Failed to delete photo');
+    }
+  };
+
+  /**
+   * Delete signature from storage
+   */
+  const handleDeleteSignature = async (signatureId: string) => {
+    try {
+      await storageService.deleteSignature(signatureId);
+      setSignatures(prev => prev.filter(s => s.id !== signatureId));
+      showSuccess('Signature deleted');
+    } catch (error) {
+      console.error('[AssetDetail] Failed to delete signature:', error);
+      showError('Failed to delete signature');
     }
   };
 
@@ -170,6 +283,36 @@ export const AssetDetail: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
+      {/* Success/Error Messages */}
+      <AnimatePresence>
+        {successMessage && (
+          <motion.div
+            initial={{ opacity: 0, y: -50 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -50 }}
+            className="fixed top-4 right-4 z-50 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg flex items-center gap-2"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+            </svg>
+            {successMessage}
+          </motion.div>
+        )}
+        {errorMessage && (
+          <motion.div
+            initial={{ opacity: 0, y: -50 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -50 }}
+            className="fixed top-4 right-4 z-50 bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg flex items-center gap-2"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+            {errorMessage}
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Header */}
       <div className="bg-white shadow-sm sticky top-0 z-40">
         <div className="px-4 py-4">
@@ -214,6 +357,66 @@ export const AssetDetail: React.FC = () => {
             )}
           </div>
         </div>
+
+        {/* Photos Section */}
+        {photos.length > 0 && (
+          <div className="bg-white rounded-lg shadow-soft p-6">
+            <h2 className="text-lg font-semibold mb-4">Photos ({photos.length})</h2>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+              {photos.map((photo) => (
+                <div key={photo.id} className="relative group">
+                  <img
+                    src={photo.dataUrl}
+                    alt="Equipment photo"
+                    className="w-full h-40 object-cover rounded-lg"
+                  />
+                  <button
+                    onClick={() => handleDeletePhoto(photo.id)}
+                    className="absolute top-2 right-2 bg-red-500 text-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                  </button>
+                  <p className="text-xs text-gray-500 mt-1">
+                    {new Date(photo.uploadedAt).toLocaleDateString()}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Signatures Section */}
+        {signatures.length > 0 && (
+          <div className="bg-white rounded-lg shadow-soft p-6">
+            <h2 className="text-lg font-semibold mb-4">Signatures ({signatures.length})</h2>
+            <div className="space-y-4">
+              {signatures.map((signature) => (
+                <div key={signature.id} className="border rounded-lg p-4 relative group">
+                  <img
+                    src={signature.dataUrl}
+                    alt="Signature"
+                    className="w-full h-32 object-contain bg-gray-50 rounded"
+                  />
+                  <button
+                    onClick={() => handleDeleteSignature(signature.id)}
+                    className="absolute top-2 right-2 bg-red-500 text-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                  </button>
+                  <div className="mt-2 text-sm text-gray-600">
+                    <p>Signed by: {signature.signedBy}</p>
+                    <p>Date: {new Date(signature.signedAt).toLocaleString()}</p>
+                    <p>Action: {signature.action}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Edit Form */}
         {isEditing && (
@@ -279,7 +482,7 @@ export const AssetDetail: React.FC = () => {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
             </svg>
-            <span className="flex-1 text-left">Add Photo</span>
+            <span className="flex-1 text-left">Add Photo {photos.length > 0 && `(${photos.length})`}</span>
             <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
             </svg>
@@ -292,7 +495,7 @@ export const AssetDetail: React.FC = () => {
             <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
             </svg>
-            <span className="flex-1 text-left">Digital Signature</span>
+            <span className="flex-1 text-left">Digital Signature {signatures.length > 0 && `(${signatures.length})`}</span>
             <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
             </svg>
