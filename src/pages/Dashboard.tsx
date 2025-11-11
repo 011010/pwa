@@ -113,7 +113,7 @@ export const Dashboard: React.FC = () => {
 
   /**
    * Fetch assignments based on filter, page, and search query
-   * Uses server-side search to query across all pages when searching
+   * Uses server-side search with smart multi-word support
    */
   useEffect(() => {
     const fetchAssignments = async () => {
@@ -127,20 +127,60 @@ export const Dashboard: React.FC = () => {
           page: currentPage,
         };
 
-        // If there's a search query, add it to params
-        // This will search across ALL pages on the server
-        if (searchQuery.trim()) {
-          params.search = searchQuery.trim();
-          console.log(`[Dashboard] Searching for: "${searchQuery.trim()}"`);
-        }
-
         // If filtering by retired, use status parameter
         if (statusFilter === 'retired') {
           params.status = 'BAJAS';
         }
 
-        // Get equipment assignments
-        const response = await equipmentService.getEquipmentAssignments(params);
+        let response;
+
+        // Handle search query with smart multi-word support
+        if (searchQuery.trim()) {
+          // Split search query into individual words
+          const searchTerms = searchQuery.trim().split(/\s+/).filter(term => term.length > 0);
+
+          console.log(`[Dashboard] Searching for terms: ${searchTerms.join(', ')}`);
+
+          if (searchTerms.length === 1) {
+            // Single word search - use API search directly
+            params.search = searchTerms[0];
+            response = await equipmentService.getEquipmentAssignments(params);
+          } else {
+            // Multi-word search - fetch all results and filter client-side
+            // This is necessary because the API searches for exact phrase matches
+            // We need to find records that contain ALL search terms (in any order)
+
+            // First, get all results using the first search term (broadest search)
+            params.search = searchTerms[0];
+            params.per_page = 100; // Increase to get more results
+            response = await equipmentService.getEquipmentAssignments(params);
+
+            // Filter results to include only those containing ALL search terms
+            const lowerSearchTerms = searchTerms.map(term => term.toLowerCase());
+
+            response.data = response.data.filter((assignment) => {
+              // Combine all searchable fields into one string
+              const searchableText = [
+                assignment.equipment,
+                assignment.serial_number,
+                assignment.model,
+                assignment.name,
+                assignment.metadata?.employee_name || '',
+                assignment.metadata?.employee_email || '',
+                assignment.metadata?.employee_department || '',
+                assignment.comments || ''
+              ].join(' ').toLowerCase();
+
+              // Check if ALL search terms are present
+              return lowerSearchTerms.every(term => searchableText.includes(term));
+            });
+
+            console.log(`[Dashboard] Multi-word search: ${response.data.length} results contain all terms`);
+          }
+        } else {
+          // No search query - normal fetch
+          response = await equipmentService.getEquipmentAssignments(params);
+        }
 
         // Filter client-side based on assignment status
         // (only when not searching, as search returns all matches)
@@ -168,7 +208,6 @@ export const Dashboard: React.FC = () => {
           // For 'all' and 'retired', use API response as-is
         } else {
           // When searching, show all results regardless of filter
-          // The search already returns relevant matches
           console.log(`[Dashboard] Found ${filteredData.length} search results`);
         }
 
