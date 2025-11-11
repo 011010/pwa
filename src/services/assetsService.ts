@@ -17,6 +17,28 @@ import type {
 } from '../types';
 
 /**
+ * Photo response from server
+ */
+export interface PhotoResponse {
+  id: number;
+  asset_id: number;
+  url: string;
+  uploaded_at: string;
+}
+
+/**
+ * Signature response from server
+ */
+export interface SignatureResponse {
+  id: number;
+  asset_id: number;
+  url: string;
+  signed_by: string;
+  signed_at: string;
+  action: string;
+}
+
+/**
  * Fetch list of all assets
  */
 export const getAssets = async (params?: {
@@ -214,6 +236,72 @@ export const uploadAssetSignature = async (
 };
 
 /**
+ * Fetch photos for an asset from server
+ */
+export const getAssetPhotos = async (assetId: number): Promise<PhotoResponse[]> => {
+  try {
+    const response = await api.get<ApiResponse<PhotoResponse[]>>(
+      endpoints.assets.photos(assetId)
+    );
+
+    if (!response.success) {
+      throw new Error(response.message || 'Failed to fetch photos');
+    }
+
+    return response.data || [];
+  } catch (error) {
+    console.error(`[Assets Service] Failed to fetch photos for asset ${assetId}:`, error);
+    throw error;
+  }
+};
+
+/**
+ * Delete photo from server
+ */
+export const deleteAssetPhoto = async (assetId: number, photoId: number): Promise<void> => {
+  try {
+    await api.delete(endpoints.assets.photoDetail(assetId, photoId));
+    console.log(`[Assets Service] Photo ${photoId} deleted from server`);
+  } catch (error) {
+    console.error(`[Assets Service] Failed to delete photo ${photoId}:`, error);
+    throw error;
+  }
+};
+
+/**
+ * Fetch signatures for an asset from server
+ */
+export const getAssetSignatures = async (assetId: number): Promise<SignatureResponse[]> => {
+  try {
+    const response = await api.get<ApiResponse<SignatureResponse[]>>(
+      endpoints.assets.signatures(assetId)
+    );
+
+    if (!response.success) {
+      throw new Error(response.message || 'Failed to fetch signatures');
+    }
+
+    return response.data || [];
+  } catch (error) {
+    console.error(`[Assets Service] Failed to fetch signatures for asset ${assetId}:`, error);
+    throw error;
+  }
+};
+
+/**
+ * Delete signature from server
+ */
+export const deleteAssetSignature = async (assetId: number, signatureId: number): Promise<void> => {
+  try {
+    await api.delete(endpoints.assets.signatureDetail(assetId, signatureId));
+    console.log(`[Assets Service] Signature ${signatureId} deleted from server`);
+  } catch (error) {
+    console.error(`[Assets Service] Failed to delete signature ${signatureId}:`, error);
+    throw error;
+  }
+};
+
+/**
  * Search assets by text query
  */
 export const searchAssets = async (query: string): Promise<Asset[]> => {
@@ -234,6 +322,10 @@ export const assetsService = {
   getAssetHistory,
   uploadAssetPhoto,
   uploadAssetSignature,
+  getAssetPhotos,
+  deleteAssetPhoto,
+  getAssetSignatures,
+  deleteAssetSignature,
   searchAssets,
 };
 
