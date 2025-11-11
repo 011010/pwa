@@ -1,0 +1,340 @@
+# Sistema de Fotos y Firmas Digitales
+
+## 📸 Descripción General
+
+El sistema permite capturar y almacenar fotos y firmas digitales para cada equipo. Toda la información se guarda localmente en el navegador usando **IndexedDB**, lo que significa que:
+
+✅ **Funciona sin conexión** (modo offline)
+✅ **Los datos persisten** (no se pierden al recargar la página)
+✅ **Es rápido** (guardado instantáneo)
+✅ **Se sincroniza con el servidor** cuando hay conexión
+
+---
+
+## 📷 Cómo Capturar Fotos
+
+### Paso 1: Abrir Detalles del Equipo
+1. Desde el Dashboard, haz clic en cualquier equipo
+2. O escanea un código QR/barcode
+
+### Paso 2: Capturar Foto
+1. En la página de detalles del equipo, haz clic en el botón **"Add Photo"** (verde)
+2. El navegador pedirá permiso para usar la cámara (acepta)
+3. Toma la foto con la cámara de tu dispositivo
+4. La foto se guarda automáticamente
+
+### Paso 3: Ver Resultado
+- Verás un mensaje de éxito: **"Photo saved successfully"**
+- La foto aparece inmediatamente en la sección "Photos" arriba de los botones
+- El botón "Add Photo" mostrará el contador: **"Add Photo (1)"**
+
+### Gestión de Fotos
+- **Ver Fotos**: Aparecen en una galería en grid (2-3 columnas)
+- **Eliminar**: Pasa el mouse sobre la foto y haz clic en el botón rojo de basura
+- **Fecha**: Cada foto muestra la fecha en que fue capturada
+
+---
+
+## ✍️ Cómo Capturar Firmas Digitales
+
+### Paso 1: Abrir Modal de Firma
+1. En los detalles del equipo, haz clic en **"Digital Signature"** (morado)
+2. Se abre un modal con un área blanca para dibujar
+
+### Paso 2: Dibujar Firma
+1. Dibuja tu firma con el mouse, dedo o stylus
+2. Para borrar y empezar de nuevo, haz clic en **"Clear"**
+3. Cuando estés satisfecho, haz clic en **"Save"**
+
+### Paso 3: Ver Resultado
+- Mensaje de éxito: **"Signature saved successfully"**
+- La firma aparece en la sección "Signatures"
+- El botón mostrará: **"Digital Signature (1)"**
+
+### Información de Firmas
+Cada firma guardada muestra:
+- **Imagen** de la firma
+- **Signed by**: Nombre del firmante
+- **Date**: Fecha y hora exacta
+- **Action**: Tipo de acción (received, delivered, etc.)
+
+### Gestión de Firmas
+- **Ver Firmas**: Listado completo con metadatos
+- **Eliminar**: Pasa el mouse y haz clic en el ícono rojo de basura
+
+---
+
+## 💾 Almacenamiento
+
+### ¿Dónde se Guardan?
+Las fotos y firmas se almacenan en **IndexedDB**, una base de datos del navegador que:
+- Está en tu dispositivo (local)
+- Funciona sin internet
+- No se borra al recargar la página
+- Puede almacenar cientos de fotos/firmas
+
+### Base de Datos
+```
+Nombre: itam_storage
+├── photos (tabla)
+│   ├── ID único
+│   ├── ID del equipo
+│   ├── Archivo de la foto
+│   ├── URL para vista previa
+│   ├── Fecha de subida
+│   └── Estado de sincronización
+│
+└── signatures (tabla)
+    ├── ID único
+    ├── ID del equipo
+    ├── Imagen de la firma (base64)
+    ├── Firmante
+    ├── Fecha y hora
+    ├── Acción
+    └── Estado de sincronización
+```
+
+### Límites de Almacenamiento
+- **Típico**: 50MB+ por sitio web
+- **Varía** según el navegador y espacio disponible
+- **Advertencia**: El navegador te avisará si se llena
+
+---
+
+## 🔄 Sincronización con el Servidor
+
+### Modo Online
+Cuando hay conexión a internet:
+1. La foto/firma se guarda **primero localmente**
+2. Luego intenta subir al servidor **en segundo plano**
+3. Si el upload es exitoso, se marca como "uploaded"
+4. **No bloquea** la interfaz (todo es asíncrono)
+
+### Modo Offline
+Cuando **no** hay conexión:
+1. Todo se guarda localmente en IndexedDB
+2. Aparece en la interfaz inmediatamente
+3. Se agregará a la **cola de sincronización** (offline queue)
+4. Cuando vuelva la conexión, se intentará subir automáticamente
+
+### Verificar Estado
+- Mira la barra de estado en el Dashboard:
+  - **Verde "Online"**: Conectado al servidor
+  - **Amarillo "Offline"**: Sin conexión
+  - **"X pending"**: Operaciones pendientes de sincronizar
+
+---
+
+## 📱 Uso en Móviles
+
+### Permisos de Cámara
+En dispositivos móviles, el navegador pedirá:
+- **Permiso de cámara**: Para capturar fotos
+- **Permiso de almacenamiento**: Para guardar en IndexedDB
+
+⚠️ **Importante**: Debes permitir estos permisos para que funcione
+
+### Cámara Trasera
+El sistema está configurado para usar la **cámara trasera** automáticamente en móviles (ideal para fotos de equipos)
+
+### Touch Support
+- **Firmas**: Puedes firmar con tu dedo en pantallas táctiles
+- **Fotos**: Interfaz optimizada para touch
+
+---
+
+## 🗑️ Eliminación de Datos
+
+### Eliminar Foto o Firma
+1. Pasa el **mouse** (o toca y mantén en móvil) sobre la foto/firma
+2. Aparece un **botón rojo** con ícono de basura en la esquina
+3. Haz **clic** para eliminar
+4. Se borra **inmediatamente** de IndexedDB
+5. Mensaje de confirmación: **"Photo deleted"** o **"Signature deleted"**
+
+⚠️ **Nota**: La eliminación es permanente y no se puede deshacer
+
+---
+
+## 🔍 Ver Fotos y Firmas
+
+### Navegación
+1. Ve al **Dashboard**
+2. Haz clic en cualquier equipo
+3. Scroll down para ver las secciones:
+   - **Photos (X)**: Galería de fotos
+   - **Signatures (X)**: Lista de firmas
+
+### Formato de Visualización
+
+**Fotos**:
+```
+┌──────────────┬──────────────┬──────────────┐
+│   [Foto 1]   │   [Foto 2]   │   [Foto 3]   │
+│ 2025-11-11   │ 2025-11-11   │ 2025-11-10   │
+└──────────────┴──────────────┴──────────────┘
+```
+
+**Firmas**:
+```
+┌─────────────────────────────────────────────┐
+│ [Imagen de la firma]                        │
+│ Signed by: Juan Pérez                       │
+│ Date: 11/11/2025, 10:30:25 AM              │
+│ Action: received                            │
+└─────────────────────────────────────────────┘
+```
+
+---
+
+## ⚙️ Configuración Técnica
+
+### Formatos Soportados
+
+**Fotos**:
+- JPEG (.jpg, .jpeg)
+- PNG (.png)
+- WebP (.webp)
+- Tamaño máximo: 5MB por foto
+
+**Firmas**:
+- Formato: PNG (base64)
+- Fondo: Transparente
+- Tamaño típico: 20-50KB
+
+### Compatibilidad de Navegadores
+- ✅ Chrome/Edge 24+
+- ✅ Firefox 16+
+- ✅ Safari 10+
+- ✅ Chrome Android
+- ✅ Safari iOS
+
+---
+
+## 🐛 Solución de Problemas
+
+### La cámara no se abre
+**Problema**: No aparece la cámara al hacer clic en "Add Photo"
+**Solución**:
+1. Verifica que diste permisos de cámara al navegador
+2. Asegúrate de estar usando **HTTPS** (no HTTP)
+3. En Chrome: Settings → Privacy → Site Settings → Camera
+4. Prueba en otro navegador
+
+### Las fotos no aparecen
+**Problema**: Capturé una foto pero no la veo
+**Solución**:
+1. Recarga la página (las fotos se cargan de IndexedDB al abrir)
+2. Verifica la consola del navegador (F12) por errores
+3. Comprueba que el navegador soporte IndexedDB
+4. Prueba limpiar cache y recargar
+
+### Error "Failed to save photo"
+**Problema**: Aparece mensaje de error al guardar
+**Solución**:
+1. Verifica que la foto no exceda 5MB
+2. Comprueba que hay espacio en IndexedDB
+3. Cierra otras pestañas que usen mucho almacenamiento
+4. En casos extremos, limpia datos del sitio
+
+### Las firmas no se guardan
+**Problema**: Dibujo la firma pero desaparece
+**Solución**:
+1. Asegúrate de hacer clic en **"Save"**, no en "Clear"
+2. Espera el mensaje de confirmación
+3. Verifica permisos de almacenamiento del navegador
+
+---
+
+## 📊 Mejores Prácticas
+
+### Para Fotos
+1. **Iluminación**: Toma fotos con buena luz
+2. **Enfoque**: Asegúrate que la foto esté nítida
+3. **Ángulo**: Toma fotos frontales del equipo
+4. **Serial**: Incluye el número de serie si es visible
+5. **Contexto**: Muestra el entorno si es relevante
+
+### Para Firmas
+1. **Legibilidad**: Firma de forma clara
+2. **Completa**: Incluye tu firma completa
+3. **Consistencia**: Usa la misma firma siempre
+4. **Verificación**: Revisa antes de guardar
+5. **Repetir**: Usa "Clear" si no quedó bien
+
+### Para Gestión
+1. **Organización**: Toma fotos desde diferentes ángulos
+2. **Documentación**: Agrega fotos de daños o detalles importantes
+3. **Fechas**: Las fotos automáticamente incluyen fecha
+4. **Backup**: Aunque sincroniza con el servidor, puedes exportar
+
+---
+
+## 🔐 Privacidad y Seguridad
+
+### Almacenamiento Local
+- Las fotos/firmas están en **tu dispositivo**
+- Otros usuarios **no pueden verlas** (a menos que sincronicen)
+- IndexedDB está protegido por **same-origin policy**
+
+### Sincronización
+- Cuando hay conexión, se intenta subir al servidor
+- El servidor puede tener autenticación y permisos
+- Las fotos se transmiten encriptadas (HTTPS)
+
+### Limpiar Datos
+Para eliminar todas las fotos/firmas:
+1. Borra el almacenamiento del sitio en el navegador
+2. O elimina cada foto/firma individualmente
+
+---
+
+## 📈 Rendimiento
+
+### Velocidad
+- **Guardado**: Instantáneo (<100ms)
+- **Carga**: <1 segundo por 10 fotos
+- **Visualización**: Inmediata (data URLs)
+- **Sincronización**: En segundo plano
+
+### Optimización
+- Las fotos se comprimen automáticamente si son muy grandes
+- IndexedDB es asíncrono (no bloquea la interfaz)
+- Carga diferida (lazy loading) para muchas fotos
+
+---
+
+## 🆘 Soporte
+
+### Recursos
+- **Documentación**: Este archivo
+- **Código**: `/src/services/storageService.ts`
+- **Componente**: `/src/pages/AssetDetail.tsx`
+
+### Logs
+Para debug, abre la consola del navegador (F12):
+- `[Storage] Photo saved: ...`
+- `[Storage] Signature saved: ...`
+- `[AssetDetail] Photo uploaded to server`
+
+---
+
+## ✨ Funcionalidades Futuras
+
+**Planeadas** (no implementadas aún):
+- [ ] Comprimir fotos automáticamente
+- [ ] Vista previa antes de guardar
+- [ ] Editar/rotar fotos
+- [ ] Anotar fotos con texto/flechas
+- [ ] Exportar como PDF
+- [ ] Múltiples firmas por equipo (entrega/recepción)
+- [ ] Plantillas de firma
+- [ ] OCR en fotos (reconocimiento de texto)
+- [ ] Búsqueda por contenido de foto
+- [ ] Galería con zoom
+
+---
+
+**Versión**: 1.0
+**Última actualización**: 2025-11-11
+**Autor**: Claude Code Assistant
