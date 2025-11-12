@@ -103,25 +103,49 @@ Nombre: itam_storage
 
 ## 🔄 Sincronización con el Servidor
 
+### ✅ Visibilidad Cross-Device
+**¡NUEVO!** Las fotos y firmas ahora se sincronizan completamente con el servidor:
+- **Toma una foto en un dispositivo** → Se sube al servidor
+- **Abre desde otro dispositivo** → ¡Las fotos aparecen automáticamente!
+- **Funciona para múltiples usuarios** → Todos ven las mismas fotos/firmas del equipo
+
 ### Modo Online
 Cuando hay conexión a internet:
-1. La foto/firma se guarda **primero localmente**
-2. Luego intenta subir al servidor **en segundo plano**
+1. La foto/firma se guarda **primero localmente** (IndexedDB)
+2. Luego sube **inmediatamente** al servidor en segundo plano
 3. Si el upload es exitoso, se marca como "uploaded"
-4. **No bloquea** la interfaz (todo es asíncrono)
+4. **Al cargar la página**, se obtienen fotos del servidor + local
+5. **No bloquea** la interfaz (todo es asíncrono)
 
 ### Modo Offline
 Cuando **no** hay conexión:
 1. Todo se guarda localmente en IndexedDB
-2. Aparece en la interfaz inmediatamente
+2. Aparece en la interfaz inmediatamente con badge **"Local"**
 3. Se agregará a la **cola de sincronización** (offline queue)
 4. Cuando vuelva la conexión, se intentará subir automáticamente
+5. Una vez subido, el badge "Local" desaparece
+
+### Carga de Datos
+Al abrir los detalles de un equipo:
+1. Se obtienen las fotos/firmas del **servidor** (si hay conexión)
+2. Se obtienen las fotos/firmas **locales** pendientes de subir
+3. Se **combinan** ambas y se muestran juntas
+4. Items con badge **"Local"** = no sincronizados aún
+5. Items sin badge = ya están en el servidor
+
+### Eliminación
+- **Items del servidor**: Se eliminan del servidor vía DELETE API
+- **Items locales**: Se eliminan de IndexedDB
+- La eliminación es **inteligente** según el origen del item
 
 ### Verificar Estado
 - Mira la barra de estado en el Dashboard:
   - **Verde "Online"**: Conectado al servidor
   - **Amarillo "Offline"**: Sin conexión
   - **"X pending"**: Operaciones pendientes de sincronizar
+- En las fotos/firmas:
+  - **Badge "Local"** amarillo: No sincronizado aún
+  - **Sin badge**: Ya está en el servidor
 
 ---
 
@@ -273,19 +297,32 @@ El sistema está configurado para usar la **cámara trasera** automáticamente e
 ## 🔐 Privacidad y Seguridad
 
 ### Almacenamiento Local
-- Las fotos/firmas están en **tu dispositivo**
-- Otros usuarios **no pueden verlas** (a menos que sincronicen)
+- Las fotos/firmas se guardan temporalmente en **tu dispositivo** (IndexedDB)
 - IndexedDB está protegido por **same-origin policy**
+- Cache local para funcionamiento offline
 
-### Sincronización
-- Cuando hay conexión, se intenta subir al servidor
-- El servidor puede tener autenticación y permisos
-- Las fotos se transmiten encriptadas (HTTPS)
+### Almacenamiento en Servidor
+- **Todas las fotos/firmas se sincronizan** al servidor
+- **Visibles desde cualquier dispositivo** con acceso al equipo
+- El servidor tiene autenticación y permisos (Bearer token)
+- Solo usuarios autenticados pueden ver/modificar
+
+### Seguridad
+- Las fotos se transmiten **encriptadas** (HTTPS)
+- Autenticación vía **Laravel Sanctum** tokens
+- Control de permisos a nivel de API
+- URLs de fotos/firmas requieren autenticación
 
 ### Limpiar Datos
-Para eliminar todas las fotos/firmas:
+
+**Datos Locales (solo tu dispositivo):**
 1. Borra el almacenamiento del sitio en el navegador
-2. O elimina cada foto/firma individualmente
+2. Settings → Privacy → Clear browsing data
+
+**Datos del Servidor (todos los dispositivos):**
+1. Elimina cada foto/firma individualmente desde la interfaz
+2. Se elimina del servidor permanentemente
+3. Ya no aparecerá en ningún dispositivo
 
 ---
 
@@ -335,6 +372,26 @@ Para debug, abre la consola del navegador (F12):
 
 ---
 
-**Versión**: 1.0
-**Última actualización**: 2025-11-11
+## 🆕 Changelog
+
+### Versión 2.0 - 2025-11-12
+- ✅ **Sincronización completa con servidor** implementada
+- ✅ **Visibilidad cross-device**: fotos y firmas visibles desde cualquier dispositivo
+- ✅ Fetch de fotos/firmas del servidor al cargar página
+- ✅ Merge inteligente de datos servidor + local
+- ✅ Badge "Local" para items no sincronizados
+- ✅ Eliminación diferenciada (servidor vs local)
+- ✅ Endpoints de API completos documentados
+- ✅ Soporte para assets y equipment-assignments
+
+### Versión 1.0 - 2025-11-11
+- ✅ Sistema de captura de fotos
+- ✅ Sistema de firmas digitales
+- ✅ Almacenamiento en IndexedDB
+- ✅ Upload básico al servidor
+
+---
+
+**Versión**: 2.0
+**Última actualización**: 2025-11-12
 **Autor**: Claude Code Assistant

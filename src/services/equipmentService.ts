@@ -10,6 +10,35 @@ import { endpoints } from '../config/environment';
 import type { EquipmentAssignment, ApiResponse } from '../types';
 
 /**
+ * Photo response from server
+ */
+export interface PhotoResponse {
+  id: number;
+  assignment_id: number;
+  url: string;
+  filename: string;
+  mime_type: string;
+  file_size: number;
+  uploaded_at: string;
+  created_at: string;
+}
+
+/**
+ * Signature response from server
+ */
+export interface SignatureResponse {
+  id: number;
+  assignment_id: number;
+  url: string;
+  filename: string;
+  signed_by: string;
+  signed_at: string;
+  action: string;
+  notes?: string;
+  created_at: string;
+}
+
+/**
  * Params for fetching equipment assignments
  */
 export interface EquipmentAssignmentsParams {
@@ -153,6 +182,156 @@ export const getEquipmentHistory = async (
   }
 };
 
+/**
+ * Upload equipment assignment photo using RESTful endpoint
+ */
+export const uploadEquipmentPhoto = async (
+  equipmentId: number,
+  photo: File
+): Promise<PhotoResponse> => {
+  try {
+    // Validate file size (max 10MB per API spec)
+    const maxSize = 10 * 1024 * 1024; // 10MB
+    if (photo.size > maxSize) {
+      throw new Error(
+        `File size exceeds maximum allowed size of ${maxSize / 1024 / 1024}MB`
+      );
+    }
+
+    // Validate file type
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
+    if (!allowedTypes.includes(photo.type)) {
+      throw new Error(
+        `File type ${photo.type} is not allowed. Allowed types: ${allowedTypes.join(', ')}`
+      );
+    }
+
+    // Use RESTful endpoint: POST /api/v1/equipment-assignments/{id}/photos
+    const response = await api.upload<ApiResponse<PhotoResponse>>(
+      endpoints.equipmentAssignments.photos(equipmentId),
+      photo,
+      {},
+      'photo' // Field name must be 'photo' per API spec
+    );
+
+    if (!response.success || !response.data) {
+      throw new Error(response.message || 'Failed to upload photo');
+    }
+
+    return response.data;
+  } catch (error) {
+    console.error(`[Equipment Service] Failed to upload photo for equipment ${equipmentId}:`, error);
+    throw error;
+  }
+};
+
+/**
+ * Upload equipment assignment signature using RESTful endpoint with JSON
+ */
+export const uploadEquipmentSignature = async (
+  equipmentId: number,
+  signatureDataUrl: string,
+  signedBy: string,
+  action: string,
+  notes?: string
+): Promise<SignatureResponse> => {
+  try {
+    // Prepare request body per API spec
+    const requestBody = {
+      signature: signatureDataUrl, // Base64 data URL
+      signed_by: signedBy,
+      signed_at: new Date().toISOString(),
+      action: action,
+      notes: notes || undefined, // Optional
+    };
+
+    // Use RESTful endpoint: POST /api/v1/equipment-assignments/{id}/signatures
+    // API expects JSON, not multipart/form-data
+    const response = await api.post<ApiResponse<SignatureResponse>>(
+      endpoints.equipmentAssignments.signatures(equipmentId),
+      requestBody
+    );
+
+    if (!response.success || !response.data) {
+      throw new Error(response.message || 'Failed to upload signature');
+    }
+
+    return response.data;
+  } catch (error) {
+    console.error(
+      `[Equipment Service] Failed to upload signature for equipment ${equipmentId}:`,
+      error
+    );
+    throw error;
+  }
+};
+
+/**
+ * Fetch photos for equipment assignment from server
+ */
+export const getEquipmentPhotos = async (equipmentId: number): Promise<PhotoResponse[]> => {
+  try {
+    const response = await api.get<ApiResponse<PhotoResponse[]>>(
+      endpoints.equipmentAssignments.photos(equipmentId)
+    );
+
+    if (!response.success) {
+      throw new Error(response.message || 'Failed to fetch photos');
+    }
+
+    return response.data || [];
+  } catch (error) {
+    console.error(`[Equipment Service] Failed to fetch photos for equipment ${equipmentId}:`, error);
+    throw error;
+  }
+};
+
+/**
+ * Delete photo from server
+ */
+export const deleteEquipmentPhoto = async (equipmentId: number, photoId: number): Promise<void> => {
+  try {
+    await api.delete(endpoints.equipmentAssignments.photoDetail(equipmentId, photoId));
+    console.log(`[Equipment Service] Photo ${photoId} deleted from server`);
+  } catch (error) {
+    console.error(`[Equipment Service] Failed to delete photo ${photoId}:`, error);
+    throw error;
+  }
+};
+
+/**
+ * Fetch signatures for equipment assignment from server
+ */
+export const getEquipmentSignatures = async (equipmentId: number): Promise<SignatureResponse[]> => {
+  try {
+    const response = await api.get<ApiResponse<SignatureResponse[]>>(
+      endpoints.equipmentAssignments.signatures(equipmentId)
+    );
+
+    if (!response.success) {
+      throw new Error(response.message || 'Failed to fetch signatures');
+    }
+
+    return response.data || [];
+  } catch (error) {
+    console.error(`[Equipment Service] Failed to fetch signatures for equipment ${equipmentId}:`, error);
+    throw error;
+  }
+};
+
+/**
+ * Delete signature from server
+ */
+export const deleteEquipmentSignature = async (equipmentId: number, signatureId: number): Promise<void> => {
+  try {
+    await api.delete(endpoints.equipmentAssignments.signatureDetail(equipmentId, signatureId));
+    console.log(`[Equipment Service] Signature ${signatureId} deleted from server`);
+  } catch (error) {
+    console.error(`[Equipment Service] Failed to delete signature ${signatureId}:`, error);
+    throw error;
+  }
+};
+
 export const equipmentService = {
   getEquipmentAssignments,
   getEquipmentAssignmentById,
@@ -160,6 +339,12 @@ export const equipmentService = {
   searchEquipmentAssignments,
   getEmployeeAssignments,
   getEquipmentHistory,
+  uploadEquipmentPhoto,
+  uploadEquipmentSignature,
+  getEquipmentPhotos,
+  deleteEquipmentPhoto,
+  getEquipmentSignatures,
+  deleteEquipmentSignature,
 };
 
 export default equipmentService;

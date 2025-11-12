@@ -3,11 +3,35 @@ import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { assetsService } from '../services/assetsService';
 import { equipmentService } from '../services/equipmentService';
-import { storageService, type StoredPhoto, type StoredSignature } from '../services/storageService';
+import { storageService } from '../services/storageService';
 import { useOfflineQueue } from '../hooks/useOfflineQueue';
 import { SignaturePad } from '../components/SignaturePad';
 import { BottomNav } from '../components/BottomNav';
 import type { Asset, AssetStatus, EquipmentAssignment } from '../types';
+
+/**
+ * Unified photo interface (from server or local storage)
+ */
+interface UnifiedPhoto {
+  id: string;
+  serverId?: number; // ID from server
+  url: string; // Either server URL or data URL
+  uploadedAt: string;
+  isLocal: boolean; // true if from IndexedDB, false if from server
+}
+
+/**
+ * Unified signature interface (from server or local storage)
+ */
+interface UnifiedSignature {
+  id: string;
+  serverId?: number; // ID from server
+  url: string; // Either server URL or data URL
+  signedBy: string;
+  signedAt: string;
+  action: string;
+  isLocal: boolean; // true if from IndexedDB, false if from server
+}
 
 export const AssetDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -19,8 +43,8 @@ export const AssetDetail: React.FC = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [showSignature, setShowSignature] = useState(false);
   const [showPhoto, setShowPhoto] = useState(false);
-  const [photos, setPhotos] = useState<StoredPhoto[]>([]);
-  const [signatures, setSignatures] = useState<StoredSignature[]>([]);
+  const [photos, setPhotos] = useState<UnifiedPhoto[]>([]);
+  const [signatures, setSignatures] = useState<UnifiedSignature[]>([]);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [formData, setFormData] = useState<{ status: AssetStatus; location: string; comments: string }>({
@@ -70,7 +94,7 @@ export const AssetDetail: React.FC = () => {
   };
 
   /**
-   * Fetch asset data and load photos/signatures
+   * Fetch asset data and load photos/signatures from both server and local storage
    */
   useEffect(() => {
     const fetchAsset = async () => {
@@ -92,11 +116,8 @@ export const AssetDetail: React.FC = () => {
           setFormData({ status: data.status, location: data.location, comments: data.comments || '' });
         }
 
-        // Load photos and signatures from local storage
-        const loadedPhotos = await storageService.getPhotos(Number(id));
-        const loadedSignatures = await storageService.getSignatures(Number(id));
-        setPhotos(loadedPhotos);
-        setSignatures(loadedSignatures);
+        // Load photos and signatures from both server and local storage
+        await loadPhotosAndSignatures(Number(id));
       } catch (error) {
         console.error('[AssetDetail] Failed to fetch asset:', error);
         setAsset(null);
@@ -106,6 +127,104 @@ export const AssetDetail: React.FC = () => {
     };
     fetchAsset();
   }, [id, isEquipmentRoute]);
+
+  /**
+   * Load photos and signatures from both server and local IndexedDB, then merge them
+   */
+  const loadPhotosAndSignatures = async (assetId: number) => {
+    try {
+      // Fetch from server (if online)
+      let serverPhotos: UnifiedPhoto[] = [];
+      let serverSignatures: UnifiedSignature[] = [];
+
+      if (isOnline) {
+        try {
+          if (isEquipmentRoute) {
+            const [photosRes, signaturesRes] = await Promise.all([
+              equipmentService.getEquipmentPhotos(assetId),
+              equipmentService.getEquipmentSignatures(assetId),
+            ]);
+            serverPhotos = photosRes.map(p => ({
+              id: `server_${p.id}`,
+              serverId: p.id,
+              url: p.url,
+              uploadedAt: p.uploaded_at,
+              isLocal: false,
+            }));
+            serverSignatures = signaturesRes.map(s => ({
+              id: `server_${s.id}`,
+              serverId: s.id,
+              url: s.url,
+              signedBy: s.signed_by,
+              signedAt: s.signed_at,
+              action: s.action,
+              isLocal: false,
+            }));
+          } else {
+            const [photosRes, signaturesRes] = await Promise.all([
+              assetsService.getAssetPhotos(assetId),
+              assetsService.getAssetSignatures(assetId),
+            ]);
+            serverPhotos = photosRes.map(p => ({
+              id: `server_${p.id}`,
+              serverId: p.id,
+              url: p.url,
+              uploadedAt: p.uploaded_at,
+              isLocal: false,
+            }));
+            serverSignatures = signaturesRes.map(s => ({
+              id: `server_${s.id}`,
+              serverId: s.id,
+              url: s.url,
+              signedBy: s.signed_by,
+              signedAt: s.signed_at,
+              action: s.action,
+              isLocal: false,
+            }));
+          }
+        } catch (serverError) {
+          console.error('[AssetDetail] Failed to fetch from server:', serverError);
+          // Continue with local data only
+        }
+      }
+
+      // Fetch from local storage
+      const [localPhotos, localSignatures] = await Promise.all([
+        storageService.getPhotos(assetId),
+        storageService.getSignatures(assetId),
+      ]);
+
+      // Convert local photos/signatures to unified format (only include non-uploaded ones)
+      const unifiedLocalPhotos: UnifiedPhoto[] = localPhotos
+        .filter(p => !p.uploaded) // Only include photos not yet uploaded
+        .map(p => ({
+          id: p.id,
+          url: p.dataUrl,
+          uploadedAt: p.uploadedAt,
+          isLocal: true,
+        }));
+
+      const unifiedLocalSignatures: UnifiedSignature[] = localSignatures
+        .filter(s => !s.uploaded) // Only include signatures not yet uploaded
+        .map(s => ({
+          id: s.id,
+          url: s.dataUrl,
+          signedBy: s.signedBy,
+          signedAt: s.signedAt,
+          action: s.action,
+          isLocal: true,
+        }));
+
+      // Merge: server data + local non-uploaded data
+      setPhotos([...serverPhotos, ...unifiedLocalPhotos]);
+      setSignatures([...serverSignatures, ...unifiedLocalSignatures]);
+
+      console.log('[AssetDetail] Loaded photos:', serverPhotos.length, 'from server,', unifiedLocalPhotos.length, 'local');
+      console.log('[AssetDetail] Loaded signatures:', serverSignatures.length, 'from server,', unifiedLocalSignatures.length, 'local');
+    } catch (error) {
+      console.error('[AssetDetail] Failed to load photos/signatures:', error);
+    }
+  };
 
   /**
    * Show success message with auto-hide
@@ -140,18 +259,24 @@ export const AssetDetail: React.FC = () => {
   };
 
   /**
-   * Handle photo capture and save to IndexedDB
+   * Handle photo capture and save to IndexedDB, then upload to server
    */
   const handlePhotoCapture = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !asset) return;
 
     try {
-      // Save photo to IndexedDB
+      // Save photo to IndexedDB first
       const savedPhoto = await storageService.savePhoto(asset.id, file);
 
-      // Update local state
-      setPhotos(prev => [...prev, savedPhoto]);
+      // Add to local state as unified photo
+      const unifiedPhoto: UnifiedPhoto = {
+        id: savedPhoto.id,
+        url: savedPhoto.dataUrl,
+        uploadedAt: savedPhoto.uploadedAt,
+        isLocal: true,
+      };
+      setPhotos(prev => [...prev, unifiedPhoto]);
 
       // Close modal
       setShowPhoto(false);
@@ -162,8 +287,16 @@ export const AssetDetail: React.FC = () => {
       // Try to upload to server if online
       if (isOnline) {
         try {
-          await assetsService.uploadAssetPhoto(asset.id, file);
+          // Upload using correct service based on route
+          if (isEquipmentRoute) {
+            await equipmentService.uploadEquipmentPhoto(asset.id, file);
+          } else {
+            await assetsService.uploadAssetPhoto(asset.id, file);
+          }
+
+          // Mark as uploaded and reload from server
           await storageService.markPhotoAsUploaded(savedPhoto.id);
+          await loadPhotosAndSignatures(asset.id);
           console.log('[AssetDetail] Photo uploaded to server');
         } catch (uploadError) {
           console.error('[AssetDetail] Failed to upload photo to server:', uploadError);
@@ -179,13 +312,13 @@ export const AssetDetail: React.FC = () => {
   };
 
   /**
-   * Handle signature save to IndexedDB
+   * Handle signature save to IndexedDB, then upload to server
    */
   const handleSignatureSave = async (signature: string) => {
     if (!asset) return;
 
     try {
-      // Save signature to IndexedDB
+      // Save signature to IndexedDB first
       const savedSignature = await storageService.saveSignature(
         asset.id,
         signature,
@@ -193,8 +326,16 @@ export const AssetDetail: React.FC = () => {
         'received'
       );
 
-      // Update local state
-      setSignatures(prev => [...prev, savedSignature]);
+      // Add to local state as unified signature
+      const unifiedSignature: UnifiedSignature = {
+        id: savedSignature.id,
+        url: savedSignature.dataUrl,
+        signedBy: savedSignature.signedBy,
+        signedAt: savedSignature.signedAt,
+        action: savedSignature.action,
+        isLocal: true,
+      };
+      setSignatures(prev => [...prev, unifiedSignature]);
 
       // Close modal
       setShowSignature(false);
@@ -205,14 +346,27 @@ export const AssetDetail: React.FC = () => {
       // Try to upload to server if online
       if (isOnline) {
         try {
-          const signatureData = {
-            signature,
-            signed_by: 'Current User',
-            signed_at: new Date().toISOString(),
-            action: 'received',
-          };
-          await assetsService.uploadAssetSignature(asset.id, signatureData);
+          // Upload using correct service based on route
+          if (isEquipmentRoute) {
+            await equipmentService.uploadEquipmentSignature(
+              asset.id,
+              signature,
+              'Current User',
+              'received'
+            );
+          } else {
+            const signatureData = {
+              signature,
+              signed_by: 'Current User',
+              signed_at: new Date().toISOString(),
+              action: 'received',
+            };
+            await assetsService.uploadAssetSignature(asset.id, signatureData);
+          }
+
+          // Mark as uploaded and reload from server
           await storageService.markSignatureAsUploaded(savedSignature.id);
+          await loadPhotosAndSignatures(asset.id);
           console.log('[AssetDetail] Signature uploaded to server');
         } catch (uploadError) {
           console.error('[AssetDetail] Failed to upload signature to server:', uploadError);
@@ -228,11 +382,28 @@ export const AssetDetail: React.FC = () => {
   };
 
   /**
-   * Delete photo from storage
+   * Delete photo from both server and local storage
    */
   const handleDeletePhoto = async (photoId: string) => {
+    if (!asset) return;
+
     try {
-      await storageService.deletePhoto(photoId);
+      const photo = photos.find(p => p.id === photoId);
+      if (!photo) return;
+
+      if (photo.isLocal) {
+        // Delete from local IndexedDB
+        await storageService.deletePhoto(photoId);
+      } else if (photo.serverId) {
+        // Delete from server
+        if (isEquipmentRoute) {
+          await equipmentService.deleteEquipmentPhoto(asset.id, photo.serverId);
+        } else {
+          await assetsService.deleteAssetPhoto(asset.id, photo.serverId);
+        }
+      }
+
+      // Remove from UI
       setPhotos(prev => prev.filter(p => p.id !== photoId));
       showSuccess('Photo deleted');
     } catch (error) {
@@ -242,11 +413,28 @@ export const AssetDetail: React.FC = () => {
   };
 
   /**
-   * Delete signature from storage
+   * Delete signature from both server and local storage
    */
   const handleDeleteSignature = async (signatureId: string) => {
+    if (!asset) return;
+
     try {
-      await storageService.deleteSignature(signatureId);
+      const signature = signatures.find(s => s.id === signatureId);
+      if (!signature) return;
+
+      if (signature.isLocal) {
+        // Delete from local IndexedDB
+        await storageService.deleteSignature(signatureId);
+      } else if (signature.serverId) {
+        // Delete from server
+        if (isEquipmentRoute) {
+          await equipmentService.deleteEquipmentSignature(asset.id, signature.serverId);
+        } else {
+          await assetsService.deleteAssetSignature(asset.id, signature.serverId);
+        }
+      }
+
+      // Remove from UI
       setSignatures(prev => prev.filter(s => s.id !== signatureId));
       showSuccess('Signature deleted');
     } catch (error) {
@@ -366,21 +554,26 @@ export const AssetDetail: React.FC = () => {
               {photos.map((photo) => (
                 <div key={photo.id} className="relative group">
                   <img
-                    src={photo.dataUrl}
+                    src={photo.url}
                     alt="Equipment photo"
                     className="w-full h-40 object-cover rounded-lg"
                   />
                   <button
                     onClick={() => handleDeletePhoto(photo.id)}
-                    className="absolute top-2 right-2 bg-red-500 text-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                    className="absolute top-2 right-2 bg-red-500 text-white p-2 rounded-full shadow-lg md:opacity-0 md:group-hover:opacity-100 transition-opacity"
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                     </svg>
                   </button>
-                  <p className="text-xs text-gray-500 mt-1">
-                    {new Date(photo.uploadedAt).toLocaleDateString()}
-                  </p>
+                  <div className="mt-1 flex items-center gap-1">
+                    <p className="text-xs text-gray-500">
+                      {new Date(photo.uploadedAt).toLocaleDateString()}
+                    </p>
+                    {photo.isLocal && (
+                      <span className="text-xs bg-yellow-100 text-yellow-800 px-1.5 py-0.5 rounded">Local</span>
+                    )}
+                  </div>
                 </div>
               ))}
             </div>
@@ -395,20 +588,25 @@ export const AssetDetail: React.FC = () => {
               {signatures.map((signature) => (
                 <div key={signature.id} className="border rounded-lg p-4 relative group">
                   <img
-                    src={signature.dataUrl}
+                    src={signature.url}
                     alt="Signature"
                     className="w-full h-32 object-contain bg-gray-50 rounded"
                   />
                   <button
                     onClick={() => handleDeleteSignature(signature.id)}
-                    className="absolute top-2 right-2 bg-red-500 text-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                    className="absolute top-2 right-2 bg-red-500 text-white p-2 rounded-full shadow-lg md:opacity-0 md:group-hover:opacity-100 transition-opacity"
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                     </svg>
                   </button>
                   <div className="mt-2 text-sm text-gray-600">
-                    <p>Signed by: {signature.signedBy}</p>
+                    <div className="flex items-center gap-2">
+                      <p>Signed by: {signature.signedBy}</p>
+                      {signature.isLocal && (
+                        <span className="text-xs bg-yellow-100 text-yellow-800 px-1.5 py-0.5 rounded">Local</span>
+                      )}
+                    </div>
                     <p>Date: {new Date(signature.signedAt).toLocaleString()}</p>
                     <p>Action: {signature.action}</p>
                   </div>

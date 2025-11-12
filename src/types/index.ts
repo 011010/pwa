@@ -74,10 +74,11 @@ export interface AssetUpdateData {
 }
 
 export interface SignatureData {
-  signature: string; // base64 encoded image
+  signature: string; // base64 encoded image (data URL format)
   signed_by: string;
   signed_at: string;
-  action: string;
+  action: string; // received, delivered, transferred, returned, maintenance, inspection
+  notes?: string; // optional notes
 }
 
 // Offline Sync Types

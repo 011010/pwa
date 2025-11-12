@@ -56,11 +56,6 @@ export const endpoints = {
     user: '/user',
   },
   health: '/health',
-  equipmentAssignments: {
-    list: '/equipment-assignments',
-    detail: (id: number) => `/equipment-assignments/${id}`,
-    stats: '/equipment-assignments-stats',
-  },
   assets: {
     list: '/assets',
     detail: (id: number) => `/assets/${id}`,
@@ -68,10 +63,19 @@ export const endpoints = {
     update: (id: number) => `/assets/${id}`,
     delete: (id: number) => `/assets/${id}`,
     history: (id: number) => `/assets/${id}/history`,
+    photos: (id: number) => `/assets/${id}/photos`,
+    photoDetail: (id: number, photoId: number) => `/assets/${id}/photos/${photoId}`,
+    signatures: (id: number) => `/assets/${id}/signatures`,
+    signatureDetail: (id: number, signatureId: number) => `/assets/${id}/signatures/${signatureId}`,
   },
-  uploads: {
-    photo: '/uploads/photo',
-    signature: '/uploads/signature',
+  equipmentAssignments: {
+    list: '/equipment-assignments',
+    detail: (id: number) => `/equipment-assignments/${id}`,
+    stats: '/equipment-assignments-stats',
+    photos: (id: number) => `/equipment-assignments/${id}/photos`,
+    photoDetail: (id: number, photoId: number) => `/equipment-assignments/${id}/photos/${photoId}`,
+    signatures: (id: number) => `/equipment-assignments/${id}/signatures`,
+    signatureDetail: (id: number, signatureId: number) => `/equipment-assignments/${id}/signatures/${signatureId}`,
   },
   inventory: {
     list: '/inventory',
