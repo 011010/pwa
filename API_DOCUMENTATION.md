@@ -449,11 +449,11 @@ curl -X GET "http://localhost/api/v1/equipment-assignments?include_delivered=tru
 
 ## Photos and Signatures API
 
-The system supports uploading, retrieving, and deleting photos and signatures for both regular assets and equipment assignments.
+The system supports uploading, retrieving, and deleting photos and signatures for both regular assets and equipment assignments using RESTful endpoints.
 
-### Upload Photo
+### Upload Asset Photo
 
-**Endpoint:** `POST /api/v1/uploads/photo`
+**Endpoint:** `POST /api/v1/assets/{assetId}/photos`
 
 **Headers:**
 ```
@@ -462,60 +462,86 @@ Content-Type: multipart/form-data
 ```
 
 **Request Body (form-data):**
-- `file` (required): Image file (max 5MB, formats: jpg, jpeg, png, webp)
-- `asset_id` (optional): Asset ID if uploading for an asset
-- `equipment_assignment_id` (optional): Equipment assignment ID if uploading for equipment
+- `photo` (required): Image file (max 10MB, formats: jpeg, jpg, png, gif)
 
 **Example Request:**
 ```bash
-curl -X POST "http://localhost/api/v1/uploads/photo" \
+curl -X POST "http://localhost/api/v1/assets/123/photos" \
   -H "Authorization: Bearer YOUR_TOKEN_HERE" \
-  -F "file=@photo.jpg" \
-  -F "equipment_assignment_id=123"
+  -F "photo=@photo.jpg"
 ```
 
-**Response (200 OK):**
+**Response (201 Created):**
 ```json
 {
-  "url": "https://yourserver.com/storage/photos/photo_123_1699876543.jpg",
-  "id": 45
+  "success": true,
+  "message": "Photo uploaded successfully",
+  "data": {
+    "id": 45,
+    "asset_id": 123,
+    "url": "/storage/assets/photos/1699876543_photo.jpg",
+    "filename": "1699876543_photo.jpg",
+    "mime_type": "image/jpeg",
+    "file_size": 245678,
+    "uploaded_at": "2025-11-12T10:30:00Z",
+    "created_at": "2025-11-12T10:30:00Z"
+  }
 }
 ```
 
-### Upload Signature
+### Upload Asset Signature
 
-**Endpoint:** `POST /api/v1/uploads/signature`
+**Endpoint:** `POST /api/v1/assets/{assetId}/signatures`
 
 **Headers:**
 ```
 Authorization: Bearer {token}
-Content-Type: multipart/form-data
+Content-Type: application/json
 ```
 
-**Request Body (form-data):**
-- `file` (required): PNG image file (signature)
-- `signed_by` (required): Name of the person signing
-- `signed_at` (required): ISO 8601 timestamp
-- `action` (required): Action type (e.g., "received", "delivered", "returned")
-- `asset_id` (optional): Asset ID if uploading for an asset
-- `equipment_assignment_id` (optional): Equipment assignment ID if uploading for equipment
+**Request Body (JSON):**
+```json
+{
+  "signature": "data:image/png;base64,iVBORw0KG...",
+  "signed_by": "Juan Pérez",
+  "signed_at": "2025-11-12T10:30:00Z",
+  "action": "received",
+  "notes": "Asset received in good condition"
+}
+```
+
+**Action Values:** `received`, `delivered`, `transferred`, `returned`, `maintenance`, `inspection`
 
 **Example Request:**
 ```bash
-curl -X POST "http://localhost/api/v1/uploads/signature" \
+curl -X POST "http://localhost/api/v1/assets/123/signatures" \
   -H "Authorization: Bearer YOUR_TOKEN_HERE" \
-  -F "file=@signature.png" \
-  -F "equipment_assignment_id=123" \
-  -F "signed_by=John Doe" \
-  -F "signed_at=2025-11-11T10:30:00Z" \
-  -F "action=received"
+  -H "Content-Type: application/json" \
+  -d '{
+    "signature": "data:image/png;base64,iVBORw0KG...",
+    "signed_by": "Juan Pérez",
+    "signed_at": "2025-11-12T10:30:00Z",
+    "action": "received",
+    "notes": "Asset received in good condition"
+  }'
 ```
 
-**Response (200 OK):**
+**Response (201 Created):**
 ```json
 {
-  "url": "https://yourserver.com/storage/signatures/sig_123_1699876543.png",
-  "id": 89
+  "success": true,
+  "message": "Signature saved successfully",
+  "data": {
+    "id": 89,
+    "asset_id": 123,
+    "url": "/storage/assets/signatures/signature_1699876543_abc123.png",
+    "filename": "signature_1699876543_abc123.png",
+    "signed_by": "Juan Pérez",
+    "signed_at": "2025-11-12T10:30:00Z",
+    "action": "received",
+    "notes": "Asset received in good condition",
+    "created_at": "2025-11-12T10:30:00Z"
+  }
 }
 ```
 
@@ -532,18 +558,17 @@ Authorization: Bearer {token}
 ```json
 {
   "success": true,
+  "message": "Asset photos retrieved successfully",
   "data": [
     {
       "id": 45,
       "asset_id": 123,
-      "url": "https://yourserver.com/storage/photos/photo_123_1699876543.jpg",
-      "uploaded_at": "2025-11-11T10:30:00Z"
-    },
-    {
-      "id": 46,
-      "asset_id": 123,
-      "url": "https://yourserver.com/storage/photos/photo_123_1699877000.jpg",
-      "uploaded_at": "2025-11-11T11:00:00Z"
+      "url": "/storage/assets/photos/1699876543_photo.jpg",
+      "filename": "1699876543_photo.jpg",
+      "mime_type": "image/jpeg",
+      "file_size": 245678,
+      "uploaded_at": "2025-11-12T10:30:00Z",
+      "created_at": "2025-11-12T10:30:00Z"
     }
   ]
 }
@@ -579,14 +604,18 @@ Authorization: Bearer {token}
 ```json
 {
   "success": true,
+  "message": "Asset signatures retrieved successfully",
   "data": [
     {
       "id": 89,
       "asset_id": 123,
-      "url": "https://yourserver.com/storage/signatures/sig_123_1699876543.png",
-      "signed_by": "John Doe",
-      "signed_at": "2025-11-11T10:30:00Z",
-      "action": "received"
+      "url": "/storage/assets/signatures/signature_1699876543_abc123.png",
+      "filename": "signature_1699876543_abc123.png",
+      "signed_by": "Juan Pérez",
+      "signed_at": "2025-11-12T10:30:00Z",
+      "action": "received",
+      "notes": "Asset received in good condition",
+      "created_at": "2025-11-12T10:30:00Z"
     }
   ]
 }
@@ -609,47 +638,20 @@ Authorization: Bearer {token}
 }
 ```
 
-### Get Equipment Assignment Photos
+### Equipment Assignments - Photos and Signatures
 
-**Endpoint:** `GET /api/v1/equipment-assignments/{id}/photos`
+Equipment assignments use the exact same RESTful structure as assets, just with different endpoints:
 
-**Headers:**
-```
-Authorization: Bearer {token}
-```
+**Upload Photo:** `POST /api/v1/equipment-assignments/{assignmentId}/photos`
+**Get Photos:** `GET /api/v1/equipment-assignments/{assignmentId}/photos`
+**Delete Photo:** `DELETE /api/v1/equipment-assignments/{assignmentId}/photos/{photoId}`
+**Upload Signature:** `POST /api/v1/equipment-assignments/{assignmentId}/signatures` (JSON body)
+**Get Signatures:** `GET /api/v1/equipment-assignments/{assignmentId}/signatures`
+**Delete Signature:** `DELETE /api/v1/equipment-assignments/{assignmentId}/signatures/{signatureId}`
 
-**Response:** Same format as asset photos, but with `equipment_assignment_id` instead of `asset_id`
+**Response format:** Same as assets endpoints, but with `assignment_id` field instead of `asset_id`
 
-### Delete Equipment Assignment Photo
-
-**Endpoint:** `DELETE /api/v1/equipment-assignments/{id}/photos/{photoId}`
-
-**Headers:**
-```
-Authorization: Bearer {token}
-```
-
-### Get Equipment Assignment Signatures
-
-**Endpoint:** `GET /api/v1/equipment-assignments/{id}/signatures`
-
-**Headers:**
-```
-Authorization: Bearer {token}
-```
-
-**Response:** Same format as asset signatures, but with `equipment_assignment_id` instead of `asset_id`
-
-### Delete Equipment Assignment Signature
-
-**Endpoint:** `DELETE /api/v1/equipment-assignments/{id}/signatures/{signatureId}`
-
-**Headers:**
-```
-Authorization: Bearer {token}
-```
-
-### Database Schema Recommendations
+### Database Schema (Actual Implementation)
 
 **For Assets:**
 ```sql
@@ -657,7 +659,12 @@ CREATE TABLE asset_photos (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
     asset_id BIGINT NOT NULL,
     url VARCHAR(500) NOT NULL,
+    filename VARCHAR(255) NOT NULL,
+    mime_type VARCHAR(50),
+    file_size INTEGER,
     uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (asset_id) REFERENCES assets(id) ON DELETE CASCADE,
     INDEX idx_asset_id (asset_id)
 );
@@ -666,10 +673,13 @@ CREATE TABLE asset_signatures (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
     asset_id BIGINT NOT NULL,
     url VARCHAR(500) NOT NULL,
+    filename VARCHAR(255) NOT NULL,
     signed_by VARCHAR(255) NOT NULL,
     signed_at TIMESTAMP NOT NULL,
     action VARCHAR(50) NOT NULL,
+    notes TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (asset_id) REFERENCES assets(id) ON DELETE CASCADE,
     INDEX idx_asset_id (asset_id)
 );
@@ -677,25 +687,33 @@ CREATE TABLE asset_signatures (
 
 **For Equipment Assignments:**
 ```sql
-CREATE TABLE equipment_assignment_photos (
+CREATE TABLE assignment_photos (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
-    equipment_assignment_id BIGINT NOT NULL,
+    assignment_id BIGINT NOT NULL,
     url VARCHAR(500) NOT NULL,
+    filename VARCHAR(255) NOT NULL,
+    mime_type VARCHAR(50),
+    file_size INTEGER,
     uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (equipment_assignment_id) REFERENCES equipment_assignments(id) ON DELETE CASCADE,
-    INDEX idx_equipment_assignment_id (equipment_assignment_id)
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (assignment_id) REFERENCES equipment_assignments(id) ON DELETE CASCADE,
+    INDEX idx_assignment_id (assignment_id)
 );
 
-CREATE TABLE equipment_assignment_signatures (
+CREATE TABLE assignment_signatures (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
-    equipment_assignment_id BIGINT NOT NULL,
+    assignment_id BIGINT NOT NULL,
     url VARCHAR(500) NOT NULL,
+    filename VARCHAR(255) NOT NULL,
     signed_by VARCHAR(255) NOT NULL,
     signed_at TIMESTAMP NOT NULL,
     action VARCHAR(50) NOT NULL,
+    notes TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (equipment_assignment_id) REFERENCES equipment_assignments(id) ON DELETE CASCADE,
-    INDEX idx_equipment_assignment_id (equipment_assignment_id)
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (assignment_id) REFERENCES equipment_assignments(id) ON DELETE CASCADE,
+    INDEX idx_assignment_id (assignment_id)
 );
 ```
 

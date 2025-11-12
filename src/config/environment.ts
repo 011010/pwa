@@ -77,10 +77,6 @@ export const endpoints = {
     signatures: (id: number) => `/equipment-assignments/${id}/signatures`,
     signatureDetail: (id: number, signatureId: number) => `/equipment-assignments/${id}/signatures/${signatureId}`,
   },
-  uploads: {
-    photo: '/uploads/photo',
-    signature: '/uploads/signature',
-  },
   inventory: {
     list: '/inventory',
     detail: (id: number) => `/inventory/${id}`,

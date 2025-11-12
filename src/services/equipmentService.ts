@@ -6,7 +6,7 @@
  */
 
 import { api } from './api';
-import { endpoints, config } from '../config/environment';
+import { endpoints } from '../config/environment';
 import type { EquipmentAssignment, ApiResponse } from '../types';
 
 /**
@@ -14,9 +14,13 @@ import type { EquipmentAssignment, ApiResponse } from '../types';
  */
 export interface PhotoResponse {
   id: number;
-  equipment_assignment_id: number;
+  assignment_id: number;
   url: string;
+  filename: string;
+  mime_type: string;
+  file_size: number;
   uploaded_at: string;
+  created_at: string;
 }
 
 /**
@@ -24,11 +28,14 @@ export interface PhotoResponse {
  */
 export interface SignatureResponse {
   id: number;
-  equipment_assignment_id: number;
+  assignment_id: number;
   url: string;
+  filename: string;
   signed_by: string;
   signed_at: string;
   action: string;
+  notes?: string;
+  created_at: string;
 }
 
 /**
@@ -176,33 +183,42 @@ export const getEquipmentHistory = async (
 };
 
 /**
- * Upload equipment assignment photo
+ * Upload equipment assignment photo using RESTful endpoint
  */
 export const uploadEquipmentPhoto = async (
   equipmentId: number,
   photo: File
-): Promise<{ url: string }> => {
+): Promise<PhotoResponse> => {
   try {
-    // Validate file size
-    if (photo.size > config.maxImageSize) {
+    // Validate file size (max 10MB per API spec)
+    const maxSize = 10 * 1024 * 1024; // 10MB
+    if (photo.size > maxSize) {
       throw new Error(
-        `File size exceeds maximum allowed size of ${config.maxImageSize / 1024 / 1024}MB`
+        `File size exceeds maximum allowed size of ${maxSize / 1024 / 1024}MB`
       );
     }
 
     // Validate file type
-    const allowedTypes = config.allowedImageTypes as readonly string[];
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
     if (!allowedTypes.includes(photo.type)) {
       throw new Error(
         `File type ${photo.type} is not allowed. Allowed types: ${allowedTypes.join(', ')}`
       );
     }
 
-    const response = await api.upload<{ url: string }>(endpoints.uploads.photo, photo, {
-      equipment_assignment_id: equipmentId,
-    });
+    // Use RESTful endpoint: POST /api/v1/equipment-assignments/{id}/photos
+    const response = await api.upload<ApiResponse<PhotoResponse>>(
+      endpoints.equipmentAssignments.photos(equipmentId),
+      photo,
+      {},
+      'photo' // Field name must be 'photo' per API spec
+    );
 
-    return response;
+    if (!response.success || !response.data) {
+      throw new Error(response.message || 'Failed to upload photo');
+    }
+
+    return response.data;
   } catch (error) {
     console.error(`[Equipment Service] Failed to upload photo for equipment ${equipmentId}:`, error);
     throw error;
@@ -210,35 +226,37 @@ export const uploadEquipmentPhoto = async (
 };
 
 /**
- * Upload equipment assignment signature
+ * Upload equipment assignment signature using RESTful endpoint with JSON
  */
 export const uploadEquipmentSignature = async (
   equipmentId: number,
   signatureDataUrl: string,
   signedBy: string,
-  action: string
-): Promise<{ url: string }> => {
+  action: string,
+  notes?: string
+): Promise<SignatureResponse> => {
   try {
-    // Convert base64 signature to blob
-    const base64Data = signatureDataUrl.split(',')[1];
-    const binaryData = atob(base64Data);
-    const bytes = new Uint8Array(binaryData.length);
-
-    for (let i = 0; i < binaryData.length; i++) {
-      bytes[i] = binaryData.charCodeAt(i);
-    }
-
-    const blob = new Blob([bytes], { type: 'image/png' });
-    const file = new File([blob], `signature_${Date.now()}.png`, { type: 'image/png' });
-
-    const response = await api.upload<{ url: string }>(endpoints.uploads.signature, file, {
-      equipment_assignment_id: equipmentId,
+    // Prepare request body per API spec
+    const requestBody = {
+      signature: signatureDataUrl, // Base64 data URL
       signed_by: signedBy,
       signed_at: new Date().toISOString(),
       action: action,
-    });
+      notes: notes || undefined, // Optional
+    };
 
-    return response;
+    // Use RESTful endpoint: POST /api/v1/equipment-assignments/{id}/signatures
+    // API expects JSON, not multipart/form-data
+    const response = await api.post<ApiResponse<SignatureResponse>>(
+      endpoints.equipmentAssignments.signatures(equipmentId),
+      requestBody
+    );
+
+    if (!response.success || !response.data) {
+      throw new Error(response.message || 'Failed to upload signature');
+    }
+
+    return response.data;
   } catch (error) {
     console.error(
       `[Equipment Service] Failed to upload signature for equipment ${equipmentId}:`,

@@ -152,9 +152,9 @@ export const api = {
   /**
    * Upload file with multipart/form-data
    */
-  upload: async <T>(url: string, file: File, additionalData?: Record<string, any>): Promise<T> => {
+  upload: async <T>(url: string, file: File, additionalData?: Record<string, any>, fieldName: string = 'file'): Promise<T> => {
     const formData = new FormData();
-    formData.append('file', file);
+    formData.append(fieldName, file);
 
     if (additionalData) {
       Object.entries(additionalData).forEach(([key, value]) => {

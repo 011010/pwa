@@ -6,7 +6,7 @@
  */
 
 import { api } from './api';
-import { endpoints, config } from '../config/environment';
+import { endpoints } from '../config/environment';
 import type {
   Asset,
   AssetUpdateData,
@@ -23,7 +23,11 @@ export interface PhotoResponse {
   id: number;
   asset_id: number;
   url: string;
+  filename: string;
+  mime_type: string;
+  file_size: number;
   uploaded_at: string;
+  created_at: string;
 }
 
 /**
@@ -33,9 +37,12 @@ export interface SignatureResponse {
   id: number;
   asset_id: number;
   url: string;
+  filename: string;
   signed_by: string;
   signed_at: string;
   action: string;
+  notes?: string;
+  created_at: string;
 }
 
 /**
@@ -165,33 +172,42 @@ export const getAssetHistory = async (id: number): Promise<AssetHistory[]> => {
 };
 
 /**
- * Upload asset photo
+ * Upload asset photo using RESTful endpoint
  */
 export const uploadAssetPhoto = async (
   assetId: number,
   photo: File
-): Promise<{ url: string }> => {
+): Promise<PhotoResponse> => {
   try {
-    // Validate file size
-    if (photo.size > config.maxImageSize) {
+    // Validate file size (max 10MB per API spec)
+    const maxSize = 10 * 1024 * 1024; // 10MB
+    if (photo.size > maxSize) {
       throw new Error(
-        `File size exceeds maximum allowed size of ${config.maxImageSize / 1024 / 1024}MB`
+        `File size exceeds maximum allowed size of ${maxSize / 1024 / 1024}MB`
       );
     }
 
     // Validate file type
-    const allowedTypes = config.allowedImageTypes as readonly string[];
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
     if (!allowedTypes.includes(photo.type)) {
       throw new Error(
         `File type ${photo.type} is not allowed. Allowed types: ${allowedTypes.join(', ')}`
       );
     }
 
-    const response = await api.upload<{ url: string }>(endpoints.uploads.photo, photo, {
-      asset_id: assetId,
-    });
+    // Use RESTful endpoint: POST /api/v1/assets/{id}/photos
+    const response = await api.upload<ApiResponse<PhotoResponse>>(
+      endpoints.assets.photos(assetId),
+      photo,
+      {},
+      'photo' // Field name must be 'photo' per API spec
+    );
 
-    return response;
+    if (!response.success || !response.data) {
+      throw new Error(response.message || 'Failed to upload photo');
+    }
+
+    return response.data;
   } catch (error) {
     console.error(`[Assets Service] Failed to upload photo for asset ${assetId}:`, error);
     throw error;
@@ -199,33 +215,34 @@ export const uploadAssetPhoto = async (
 };
 
 /**
- * Upload asset signature
+ * Upload asset signature using RESTful endpoint with JSON
  */
 export const uploadAssetSignature = async (
   assetId: number,
   signatureData: SignatureData
-): Promise<{ url: string }> => {
+): Promise<SignatureResponse> => {
   try {
-    // Convert base64 signature to blob
-    const base64Data = signatureData.signature.split(',')[1];
-    const binaryData = atob(base64Data);
-    const bytes = new Uint8Array(binaryData.length);
-
-    for (let i = 0; i < binaryData.length; i++) {
-      bytes[i] = binaryData.charCodeAt(i);
-    }
-
-    const blob = new Blob([bytes], { type: 'image/png' });
-    const file = new File([blob], `signature_${Date.now()}.png`, { type: 'image/png' });
-
-    const response = await api.upload<{ url: string }>(endpoints.uploads.signature, file, {
-      asset_id: assetId,
+    // Prepare request body per API spec
+    const requestBody = {
+      signature: signatureData.signature, // Base64 data URL
       signed_by: signatureData.signed_by,
       signed_at: signatureData.signed_at,
       action: signatureData.action,
-    });
+      notes: signatureData.notes || undefined, // Optional
+    };
 
-    return response;
+    // Use RESTful endpoint: POST /api/v1/assets/{id}/signatures
+    // API expects JSON, not multipart/form-data
+    const response = await api.post<ApiResponse<SignatureResponse>>(
+      endpoints.assets.signatures(assetId),
+      requestBody
+    );
+
+    if (!response.success || !response.data) {
+      throw new Error(response.message || 'Failed to upload signature');
+    }
+
+    return response.data;
   } catch (error) {
     console.error(
       `[Assets Service] Failed to upload signature for asset ${assetId}:`,
