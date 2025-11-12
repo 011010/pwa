@@ -447,6 +447,260 @@ curl -X GET "http://localhost/api/v1/equipment-assignments?include_delivered=tru
 
 ---
 
+## Photos and Signatures API
+
+The system supports uploading, retrieving, and deleting photos and signatures for both regular assets and equipment assignments.
+
+### Upload Photo
+
+**Endpoint:** `POST /api/v1/uploads/photo`
+
+**Headers:**
+```
+Authorization: Bearer {token}
+Content-Type: multipart/form-data
+```
+
+**Request Body (form-data):**
+- `file` (required): Image file (max 5MB, formats: jpg, jpeg, png, webp)
+- `asset_id` (optional): Asset ID if uploading for an asset
+- `equipment_assignment_id` (optional): Equipment assignment ID if uploading for equipment
+
+**Example Request:**
+```bash
+curl -X POST "http://localhost/api/v1/uploads/photo" \
+  -H "Authorization: Bearer YOUR_TOKEN_HERE" \
+  -F "file=@photo.jpg" \
+  -F "equipment_assignment_id=123"
+```
+
+**Response (200 OK):**
+```json
+{
+  "url": "https://yourserver.com/storage/photos/photo_123_1699876543.jpg",
+  "id": 45
+}
+```
+
+### Upload Signature
+
+**Endpoint:** `POST /api/v1/uploads/signature`
+
+**Headers:**
+```
+Authorization: Bearer {token}
+Content-Type: multipart/form-data
+```
+
+**Request Body (form-data):**
+- `file` (required): PNG image file (signature)
+- `signed_by` (required): Name of the person signing
+- `signed_at` (required): ISO 8601 timestamp
+- `action` (required): Action type (e.g., "received", "delivered", "returned")
+- `asset_id` (optional): Asset ID if uploading for an asset
+- `equipment_assignment_id` (optional): Equipment assignment ID if uploading for equipment
+
+**Example Request:**
+```bash
+curl -X POST "http://localhost/api/v1/uploads/signature" \
+  -H "Authorization: Bearer YOUR_TOKEN_HERE" \
+  -F "file=@signature.png" \
+  -F "equipment_assignment_id=123" \
+  -F "signed_by=John Doe" \
+  -F "signed_at=2025-11-11T10:30:00Z" \
+  -F "action=received"
+```
+
+**Response (200 OK):**
+```json
+{
+  "url": "https://yourserver.com/storage/signatures/sig_123_1699876543.png",
+  "id": 89
+}
+```
+
+### Get Asset Photos
+
+**Endpoint:** `GET /api/v1/assets/{id}/photos`
+
+**Headers:**
+```
+Authorization: Bearer {token}
+```
+
+**Response (200 OK):**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": 45,
+      "asset_id": 123,
+      "url": "https://yourserver.com/storage/photos/photo_123_1699876543.jpg",
+      "uploaded_at": "2025-11-11T10:30:00Z"
+    },
+    {
+      "id": 46,
+      "asset_id": 123,
+      "url": "https://yourserver.com/storage/photos/photo_123_1699877000.jpg",
+      "uploaded_at": "2025-11-11T11:00:00Z"
+    }
+  ]
+}
+```
+
+### Delete Asset Photo
+
+**Endpoint:** `DELETE /api/v1/assets/{id}/photos/{photoId}`
+
+**Headers:**
+```
+Authorization: Bearer {token}
+```
+
+**Response (200 OK):**
+```json
+{
+  "success": true,
+  "message": "Photo deleted successfully"
+}
+```
+
+### Get Asset Signatures
+
+**Endpoint:** `GET /api/v1/assets/{id}/signatures`
+
+**Headers:**
+```
+Authorization: Bearer {token}
+```
+
+**Response (200 OK):**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": 89,
+      "asset_id": 123,
+      "url": "https://yourserver.com/storage/signatures/sig_123_1699876543.png",
+      "signed_by": "John Doe",
+      "signed_at": "2025-11-11T10:30:00Z",
+      "action": "received"
+    }
+  ]
+}
+```
+
+### Delete Asset Signature
+
+**Endpoint:** `DELETE /api/v1/assets/{id}/signatures/{signatureId}`
+
+**Headers:**
+```
+Authorization: Bearer {token}
+```
+
+**Response (200 OK):**
+```json
+{
+  "success": true,
+  "message": "Signature deleted successfully"
+}
+```
+
+### Get Equipment Assignment Photos
+
+**Endpoint:** `GET /api/v1/equipment-assignments/{id}/photos`
+
+**Headers:**
+```
+Authorization: Bearer {token}
+```
+
+**Response:** Same format as asset photos, but with `equipment_assignment_id` instead of `asset_id`
+
+### Delete Equipment Assignment Photo
+
+**Endpoint:** `DELETE /api/v1/equipment-assignments/{id}/photos/{photoId}`
+
+**Headers:**
+```
+Authorization: Bearer {token}
+```
+
+### Get Equipment Assignment Signatures
+
+**Endpoint:** `GET /api/v1/equipment-assignments/{id}/signatures`
+
+**Headers:**
+```
+Authorization: Bearer {token}
+```
+
+**Response:** Same format as asset signatures, but with `equipment_assignment_id` instead of `asset_id`
+
+### Delete Equipment Assignment Signature
+
+**Endpoint:** `DELETE /api/v1/equipment-assignments/{id}/signatures/{signatureId}`
+
+**Headers:**
+```
+Authorization: Bearer {token}
+```
+
+### Database Schema Recommendations
+
+**For Assets:**
+```sql
+CREATE TABLE asset_photos (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    asset_id BIGINT NOT NULL,
+    url VARCHAR(500) NOT NULL,
+    uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (asset_id) REFERENCES assets(id) ON DELETE CASCADE,
+    INDEX idx_asset_id (asset_id)
+);
+
+CREATE TABLE asset_signatures (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    asset_id BIGINT NOT NULL,
+    url VARCHAR(500) NOT NULL,
+    signed_by VARCHAR(255) NOT NULL,
+    signed_at TIMESTAMP NOT NULL,
+    action VARCHAR(50) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (asset_id) REFERENCES assets(id) ON DELETE CASCADE,
+    INDEX idx_asset_id (asset_id)
+);
+```
+
+**For Equipment Assignments:**
+```sql
+CREATE TABLE equipment_assignment_photos (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    equipment_assignment_id BIGINT NOT NULL,
+    url VARCHAR(500) NOT NULL,
+    uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (equipment_assignment_id) REFERENCES equipment_assignments(id) ON DELETE CASCADE,
+    INDEX idx_equipment_assignment_id (equipment_assignment_id)
+);
+
+CREATE TABLE equipment_assignment_signatures (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    equipment_assignment_id BIGINT NOT NULL,
+    url VARCHAR(500) NOT NULL,
+    signed_by VARCHAR(255) NOT NULL,
+    signed_at TIMESTAMP NOT NULL,
+    action VARCHAR(50) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (equipment_assignment_id) REFERENCES equipment_assignments(id) ON DELETE CASCADE,
+    INDEX idx_equipment_assignment_id (equipment_assignment_id)
+);
+```
+
+---
+
 ## Error Responses
 
 ### 401 Unauthorized
