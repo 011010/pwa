@@ -201,7 +201,7 @@ export const SignaturePad: React.FC<SignaturePadProps> = ({ onSave, onClear }) =
           <button
             onClick={handleSave}
             disabled={isEmpty}
-            className="flex-1 flex items-center justify-center px-4 py-2 text-sm font-medium text-white bg-primary-600 border border-transparent rounded-lg hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="flex-1 flex items-center justify-center px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-lg hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             <svg
               className="w-5 h-5 mr-2"
