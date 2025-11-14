@@ -9,18 +9,19 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 import { useOfflineQueue } from '../hooks/useOfflineQueue';
 import { BottomNav } from '../components/BottomNav';
 
 export const Profile: React.FC = () => {
   const { user, logout } = useAuth();
+  const { darkMode, toggleDarkMode } = useTheme();
   const { isOnline, pendingCount } = useOfflineQueue();
   const navigate = useNavigate();
 
   // App settings state
   const [offlineMode, setOfflineMode] = useState(false);
   const [notifications, setNotifications] = useState(true);
-  const [darkMode, setDarkMode] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
@@ -29,27 +30,11 @@ export const Profile: React.FC = () => {
     const savedSettings = {
       offlineMode: localStorage.getItem('app_offlineMode') === 'true',
       notifications: localStorage.getItem('app_notifications') === 'true',
-      darkMode: localStorage.getItem('app_darkMode') === 'true',
     };
 
     setOfflineMode(savedSettings.offlineMode);
     setNotifications(savedSettings.notifications);
-    setDarkMode(savedSettings.darkMode);
-
-    // Apply dark mode class to html element if enabled
-    if (savedSettings.darkMode) {
-      document.documentElement.classList.add('dark');
-    }
   }, []);
-
-  // Apply dark mode when state changes
-  useEffect(() => {
-    if (darkMode) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-  }, [darkMode]);
 
   // Handle offline mode toggle
   const handleOfflineModeToggle = () => {
@@ -68,9 +53,7 @@ export const Profile: React.FC = () => {
 
   // Handle dark mode toggle
   const handleDarkModeToggle = () => {
-    const newValue = !darkMode;
-    setDarkMode(newValue);
-    localStorage.setItem('app_darkMode', newValue.toString());
+    toggleDarkMode();
   };
 
   // Handle logout
