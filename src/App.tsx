@@ -14,6 +14,7 @@ import Dashboard from './pages/Dashboard';
 import Scanner from './pages/Scanner';
 import AssetDetail from './pages/AssetDetail';
 import EmployeeEquipment from './pages/EmployeeEquipment';
+import Profile from './pages/Profile';
 
 function App() {
   return (
@@ -68,9 +69,7 @@ function App() {
             path="/profile"
             element={
               <ProtectedRoute>
-                <div className="flex items-center justify-center min-h-screen">
-                  <h1 className="text-2xl font-bold">Profile Page - Coming Soon</h1>
-                </div>
+                <Profile />
               </ProtectedRoute>
             }
           />
