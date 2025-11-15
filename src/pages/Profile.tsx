@@ -244,7 +244,7 @@ export const Profile: React.FC = () => {
               <button
                 onClick={handleOfflineModeToggle}
                 className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                  offlineMode ? 'bg-primary-600 dark:bg-primary-500' : 'bg-gray-200 dark:bg-gray-700'
+                  offlineMode ? 'bg-primary-600' : 'bg-gray-300'
                 }`}
                 aria-label="Toggle offline mode"
               >
@@ -267,7 +267,7 @@ export const Profile: React.FC = () => {
               <button
                 onClick={handleNotificationsToggle}
                 className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                  notifications ? 'bg-primary-600 dark:bg-primary-500' : 'bg-gray-200 dark:bg-gray-700'
+                  notifications ? 'bg-primary-600' : 'bg-gray-300'
                 }`}
                 aria-label="Toggle notifications"
               >
@@ -290,7 +290,7 @@ export const Profile: React.FC = () => {
               <button
                 onClick={handleDarkModeToggle}
                 className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                  darkMode ? 'bg-primary-600 dark:bg-primary-500' : 'bg-gray-200 dark:bg-gray-700'
+                  darkMode ? 'bg-primary-600' : 'bg-gray-300'
                 }`}
                 aria-label="Toggle dark mode"
               >

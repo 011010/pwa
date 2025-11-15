@@ -25,31 +25,40 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   useEffect(() => {
     const savedTheme = localStorage.getItem('app_darkMode');
     const isDark = savedTheme === 'true';
+    console.log('[ThemeContext] Loading theme from localStorage:', savedTheme, '-> isDark:', isDark);
     setDarkModeState(isDark);
 
     // Apply theme to document
     if (isDark) {
       document.documentElement.classList.add('dark');
+      console.log('[ThemeContext] Applied dark class to HTML');
     } else {
       document.documentElement.classList.remove('dark');
+      console.log('[ThemeContext] Removed dark class from HTML');
     }
   }, []);
 
   // Apply dark mode class to document when state changes
   useEffect(() => {
+    console.log('[ThemeContext] darkMode state changed to:', darkMode);
     if (darkMode) {
       document.documentElement.classList.add('dark');
+      console.log('[ThemeContext] Applied dark class to HTML');
     } else {
       document.documentElement.classList.remove('dark');
+      console.log('[ThemeContext] Removed dark class from HTML');
     }
   }, [darkMode]);
 
   const setDarkMode = (enabled: boolean) => {
+    console.log('[ThemeContext] setDarkMode called with:', enabled);
     setDarkModeState(enabled);
     localStorage.setItem('app_darkMode', enabled.toString());
+    console.log('[ThemeContext] Saved to localStorage:', enabled.toString());
   };
 
   const toggleDarkMode = () => {
+    console.log('[ThemeContext] toggleDarkMode called. Current darkMode:', darkMode);
     setDarkMode(!darkMode);
   };
 
