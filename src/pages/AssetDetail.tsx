@@ -445,7 +445,7 @@ export const AssetDetail: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-50 dark:bg-gray-900">
+      <div className="flex items-center justify-center min-h-screen bg-gray-50">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600" />
       </div>
     );
@@ -453,12 +453,12 @@ export const AssetDetail: React.FC = () => {
 
   if (!asset) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50 dark:bg-gray-900">
-        <svg className="w-16 h-16 text-gray-400 dark:text-gray-500 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50">
+        <svg className="w-16 h-16 text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
         </svg>
-        <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">Equipment not found</h2>
-        <p className="text-gray-600 dark:text-gray-400 mb-4">The equipment you're looking for doesn't exist or has been removed.</p>
+        <h2 className="text-xl font-semibold text-gray-900 mb-2">Equipment not found</h2>
+        <p className="text-gray-600 mb-4">The equipment you're looking for doesn't exist or has been removed.</p>
         <button
           onClick={() => navigate('/dashboard')}
           className="bg-primary-600 text-white px-6 py-2 rounded-lg hover:bg-primary-700 transition-colors"
@@ -470,7 +470,7 @@ export const AssetDetail: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pb-20">
+    <div className="min-h-screen bg-gray-50 pb-20">
       {/* Success/Error Messages */}
       <AnimatePresence>
         {successMessage && (
@@ -502,7 +502,7 @@ export const AssetDetail: React.FC = () => {
       </AnimatePresence>
 
       {/* Header */}
-      <div className="bg-white dark:bg-gray-800 shadow-sm sticky top-0 z-40 transition-colors">
+      <div className="bg-white shadow-sm sticky top-0 z-40 transition-colors">
         <div className="px-4 py-4">
           <div className="flex items-center">
             <button
@@ -515,15 +515,15 @@ export const AssetDetail: React.FC = () => {
                   navigate('/dashboard');
                 }
               }}
-              className="mr-3 p-2 -ml-2 text-gray-600 dark:text-gray-400 transition-colors"
+              className="mr-3 p-2 -ml-2 text-gray-600 transition-colors"
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
             </button>
             <div>
-              <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">{asset.name}</h1>
-              <p className="text-sm text-gray-600 dark:text-gray-400 font-mono">{asset.code}</p>
+              <h1 className="text-xl font-bold text-gray-900">{asset.name}</h1>
+              <p className="text-sm text-gray-600 font-mono">{asset.code}</p>
             </div>
           </div>
         </div>
@@ -532,24 +532,24 @@ export const AssetDetail: React.FC = () => {
       {/* Content */}
       <div className="max-w-screen-xl mx-auto px-4 py-6 space-y-4">
         {/* Asset Info Card */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-soft p-6 transition-colors">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Asset Information</h2>
+        <div className="bg-white rounded-lg shadow-soft p-6 transition-colors">
+          <h2 className="text-lg font-semibold text-gray-900 mb-4">Asset Information</h2>
           <div className="space-y-3 text-sm">
-            <div><span className="text-gray-600 dark:text-gray-400">Model:</span> <span className="font-medium text-gray-900 dark:text-gray-100 ml-2">{asset.model}</span></div>
-            <div><span className="text-gray-600 dark:text-gray-400">Serial:</span> <span className="font-medium text-gray-900 dark:text-gray-100 ml-2">{asset.serial_number}</span></div>
-            <div><span className="text-gray-600 dark:text-gray-400">Category:</span> <span className="font-medium text-gray-900 dark:text-gray-100 ml-2">{asset.category}</span></div>
-            <div><span className="text-gray-600 dark:text-gray-400">Status:</span> <span className="font-medium text-gray-900 dark:text-gray-100 ml-2">{asset.status}</span></div>
-            <div><span className="text-gray-600 dark:text-gray-400">Location:</span> <span className="font-medium text-gray-900 dark:text-gray-100 ml-2">{asset.location}</span></div>
+            <div><span className="text-gray-600">Model:</span> <span className="font-medium text-gray-900 ml-2">{asset.model}</span></div>
+            <div><span className="text-gray-600">Serial:</span> <span className="font-medium text-gray-900 ml-2">{asset.serial_number}</span></div>
+            <div><span className="text-gray-600">Category:</span> <span className="font-medium text-gray-900 ml-2">{asset.category}</span></div>
+            <div><span className="text-gray-600">Status:</span> <span className="font-medium text-gray-900 ml-2">{asset.status}</span></div>
+            <div><span className="text-gray-600">Location:</span> <span className="font-medium text-gray-900 ml-2">{asset.location}</span></div>
             {asset.assigned_to && (
-              <div><span className="text-gray-600 dark:text-gray-400">Assigned to:</span> <span className="font-medium text-gray-900 dark:text-gray-100 ml-2">{asset.assigned_to.name}</span></div>
+              <div><span className="text-gray-600">Assigned to:</span> <span className="font-medium text-gray-900 ml-2">{asset.assigned_to.name}</span></div>
             )}
           </div>
         </div>
 
         {/* Photos Section */}
         {photos.length > 0 && (
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-soft p-6 transition-colors">
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Photos ({photos.length})</h2>
+          <div className="bg-white rounded-lg shadow-soft p-6 transition-colors">
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">Photos ({photos.length})</h2>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
               {photos.map((photo) => (
                 <div key={photo.id} className="relative group">
@@ -567,11 +567,11 @@ export const AssetDetail: React.FC = () => {
                     </svg>
                   </button>
                   <div className="mt-1 flex items-center gap-1">
-                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                    <p className="text-xs text-gray-500">
                       {new Date(photo.uploadedAt).toLocaleDateString()}
                     </p>
                     {photo.isLocal && (
-                      <span className="text-xs bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200 px-1.5 py-0.5 rounded">Local</span>
+                      <span className="text-xs bg-yellow-100 text-yellow-800 px-1.5 py-0.5 rounded">Local</span>
                     )}
                   </div>
                 </div>
@@ -582,15 +582,15 @@ export const AssetDetail: React.FC = () => {
 
         {/* Signatures Section */}
         {signatures.length > 0 && (
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-soft p-6 transition-colors">
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Signatures ({signatures.length})</h2>
+          <div className="bg-white rounded-lg shadow-soft p-6 transition-colors">
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">Signatures ({signatures.length})</h2>
             <div className="space-y-4">
               {signatures.map((signature) => (
-                <div key={signature.id} className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 relative group transition-colors">
+                <div key={signature.id} className="border border-gray-200 rounded-lg p-4 relative group transition-colors">
                   <img
                     src={signature.url}
                     alt="Signature"
-                    className="w-full h-32 object-contain bg-gray-50 dark:bg-gray-900 rounded"
+                    className="w-full h-32 object-contain bg-gray-50 rounded"
                   />
                   <button
                     onClick={() => handleDeleteSignature(signature.id)}
@@ -600,11 +600,11 @@ export const AssetDetail: React.FC = () => {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                     </svg>
                   </button>
-                  <div className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+                  <div className="mt-2 text-sm text-gray-600">
                     <div className="flex items-center gap-2">
                       <p>Signed by: {signature.signedBy}</p>
                       {signature.isLocal && (
-                        <span className="text-xs bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200 px-1.5 py-0.5 rounded">Local</span>
+                        <span className="text-xs bg-yellow-100 text-yellow-800 px-1.5 py-0.5 rounded">Local</span>
                       )}
                     </div>
                     <p>Date: {new Date(signature.signedAt).toLocaleString()}</p>
@@ -618,12 +618,12 @@ export const AssetDetail: React.FC = () => {
 
         {/* Edit Form */}
         {isEditing && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="bg-white dark:bg-gray-800 rounded-lg shadow-soft p-6 transition-colors">
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Update Asset</h2>
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="bg-white rounded-lg shadow-soft p-6 transition-colors">
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">Update Asset</h2>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">Status</label>
-                <select value={formData.status} onChange={(e) => setFormData({ ...formData, status: e.target.value as AssetStatus })} className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg transition-colors">
+                <label className="block text-sm font-medium text-gray-900 mb-2">Status</label>
+                <select value={formData.status} onChange={(e) => setFormData({ ...formData, status: e.target.value as AssetStatus })} className="w-full px-3 py-2 border border-gray-300 bg-white text-gray-900 rounded-lg transition-colors">
                   <option value="available">Available</option>
                   <option value="in_use">In Use</option>
                   <option value="maintenance">Maintenance</option>
@@ -632,12 +632,12 @@ export const AssetDetail: React.FC = () => {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">Location</label>
-                <input type="text" value={formData.location} onChange={(e) => setFormData({ ...formData, location: e.target.value })} className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg transition-colors" />
+                <label className="block text-sm font-medium text-gray-900 mb-2">Location</label>
+                <input type="text" value={formData.location} onChange={(e) => setFormData({ ...formData, location: e.target.value })} className="w-full px-3 py-2 border border-gray-300 bg-white text-gray-900 rounded-lg transition-colors" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">Comments</label>
-                <textarea value={formData.comments} onChange={(e) => setFormData({ ...formData, comments: e.target.value })} rows={3} className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg transition-colors" />
+                <label className="block text-sm font-medium text-gray-900 mb-2">Comments</label>
+                <textarea value={formData.comments} onChange={(e) => setFormData({ ...formData, comments: e.target.value })} rows={3} className="w-full px-3 py-2 border border-gray-300 bg-white text-gray-900 rounded-lg transition-colors" />
               </div>
               <div className="flex gap-3">
                 <button
@@ -648,7 +648,7 @@ export const AssetDetail: React.FC = () => {
                 </button>
                 <button
                   onClick={() => setIsEditing(false)}
-                  className="flex-1 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200 font-medium py-3 rounded-lg transition-colors"
+                  className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-3 rounded-lg transition-colors"
                 >
                   Cancel
                 </button>
@@ -658,10 +658,10 @@ export const AssetDetail: React.FC = () => {
         )}
 
         {/* Actions - Enhanced button visibility with better styling */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-soft p-4 space-y-3 transition-colors">
+        <div className="bg-white rounded-lg shadow-soft p-4 space-y-3 transition-colors">
           <button
             onClick={() => setIsEditing(!isEditing)}
-            className="w-full flex items-center gap-3 p-4 bg-blue-50 dark:bg-blue-900/30 hover:bg-blue-100 dark:hover:bg-blue-900/50 text-blue-700 dark:text-blue-300 font-medium rounded-lg transition-colors border border-blue-200 dark:border-blue-800"
+            className="w-full flex items-center gap-3 p-4 bg-blue-50 hover:bg-blue-100 text-blue-700 font-medium rounded-lg transition-colors border border-blue-200"
           >
             <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -674,7 +674,7 @@ export const AssetDetail: React.FC = () => {
 
           <button
             onClick={() => setShowPhoto(true)}
-            className="w-full flex items-center gap-3 p-4 bg-green-50 dark:bg-green-900/30 hover:bg-green-100 dark:hover:bg-green-900/50 text-green-700 dark:text-green-300 font-medium rounded-lg transition-colors border border-green-200 dark:border-green-800"
+            className="w-full flex items-center gap-3 p-4 bg-green-50 hover:bg-green-100 text-green-700 font-medium rounded-lg transition-colors border border-green-200"
           >
             <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
@@ -688,7 +688,7 @@ export const AssetDetail: React.FC = () => {
 
           <button
             onClick={() => setShowSignature(true)}
-            className="w-full flex items-center gap-3 p-4 bg-purple-50 dark:bg-purple-900/30 hover:bg-purple-100 dark:hover:bg-purple-900/50 text-purple-700 dark:text-purple-300 font-medium rounded-lg transition-colors border border-purple-200 dark:border-purple-800"
+            className="w-full flex items-center gap-3 p-4 bg-purple-50 hover:bg-purple-100 text-purple-700 font-medium rounded-lg transition-colors border border-purple-200"
           >
             <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
@@ -703,8 +703,8 @@ export const AssetDetail: React.FC = () => {
 
       {/* Signature Modal */}
       {showSignature && (
-        <div className="fixed inset-0 bg-black/50 dark:bg-black/70 z-50 flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-gray-800 rounded-lg w-full max-w-lg h-96 transition-colors">
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-lg w-full max-w-lg h-96 transition-colors">
             <SignaturePad onSave={handleSignatureSave} onClear={() => setShowSignature(false)} />
           </div>
         </div>
@@ -712,30 +712,30 @@ export const AssetDetail: React.FC = () => {
 
       {/* Photo Input Modal - Enhanced styling */}
       {showPhoto && (
-        <div className="fixed inset-0 bg-black/50 dark:bg-black/70 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-md w-full transition-colors"
+            className="bg-white rounded-lg p-6 max-w-md w-full transition-colors"
           >
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Capture Photo</h3>
+              <h3 className="text-lg font-semibold text-gray-900">Capture Photo</h3>
               <button
                 onClick={() => setShowPhoto(false)}
-                className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors"
+                className="p-1 hover:bg-gray-100 rounded-full transition-colors"
               >
-                <svg className="w-5 h-5 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
             </div>
             <div className="mb-4">
-              <label className="block w-full px-4 py-8 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg text-center hover:border-primary-500 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer">
-                <svg className="w-12 h-12 text-gray-400 dark:text-gray-500 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <label className="block w-full px-4 py-8 border-2 border-dashed border-gray-300 rounded-lg text-center hover:border-primary-500 hover:bg-gray-50 transition-colors cursor-pointer">
+                <svg className="w-12 h-12 text-gray-400 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
                 </svg>
-                <span className="text-sm text-gray-600 dark:text-gray-400">Click to capture photo</span>
+                <span className="text-sm text-gray-600">Click to capture photo</span>
                 <input
                   type="file"
                   accept="image/*"
@@ -747,7 +747,7 @@ export const AssetDetail: React.FC = () => {
             </div>
             <button
               onClick={() => setShowPhoto(false)}
-              className="w-full bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200 font-medium py-3 rounded-lg transition-colors"
+              className="w-full bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-3 rounded-lg transition-colors"
             >
               Cancel
             </button>

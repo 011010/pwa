@@ -276,18 +276,18 @@ export const Dashboard: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pb-20 transition-colors">
+    <div className="min-h-screen bg-gray-50 pb-20 transition-colors">
       {/* Header */}
-      <div className="bg-white dark:bg-gray-800 shadow-sm sticky top-0 z-40 transition-colors">
+      <div className="bg-white shadow-sm sticky top-0 z-40 transition-colors">
         <div className="max-w-screen-xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Assets</h1>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Welcome, {user?.name}</p>
+              <h1 className="text-2xl font-bold text-gray-900">Assets</h1>
+              <p className="text-sm text-gray-600">Welcome, {user?.name}</p>
             </div>
             <button
               onClick={() => logout()}
-              className="p-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors"
+              className="p-2 text-gray-600 hover:text-gray-900 transition-colors"
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
@@ -297,12 +297,12 @@ export const Dashboard: React.FC = () => {
 
           {/* Status Bar */}
           <div className="flex items-center gap-2 text-sm">
-            <div className={`flex items-center px-2 py-1 rounded ${isOnline ? 'bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-300' : 'bg-yellow-100 dark:bg-yellow-900/40 text-yellow-800 dark:text-yellow-300'}`}>
+            <div className={`flex items-center px-2 py-1 rounded ${isOnline ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
               <span className={`w-2 h-2 rounded-full mr-2 ${isOnline ? 'bg-green-500' : 'bg-yellow-500'}`} />
               {isOnline ? 'Online' : 'Offline'}
             </div>
             {pendingCount > 0 && (
-              <div className="px-2 py-1 bg-blue-100 dark:bg-blue-900/40 text-blue-800 dark:text-blue-300 rounded">
+              <div className="px-2 py-1 bg-blue-100 text-blue-800 rounded">
                 {isSyncing ? 'Syncing...' : `${pendingCount} pending`}
               </div>
             )}
@@ -315,9 +315,9 @@ export const Dashboard: React.FC = () => {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search assets..."
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors placeholder:text-gray-400 dark:placeholder:text-gray-500"
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 bg-white text-gray-900 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors placeholder:text-gray-400"
             />
-            <svg className="absolute left-3 top-2.5 w-5 h-5 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="absolute left-3 top-2.5 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
             </svg>
           </div>
@@ -328,8 +328,8 @@ export const Dashboard: React.FC = () => {
               onClick={() => setStatusFilter('all')}
               className={`px-4 py-2 rounded-lg font-medium text-sm whitespace-nowrap transition-colors ${
                 statusFilter === 'all'
-                  ? 'bg-blue-200 dark:bg-blue-600 text-black dark:text-white'
-                  : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                  ? 'bg-blue-200 text-black'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
               }`}
             >
               All ({allCounts.all})
@@ -338,8 +338,8 @@ export const Dashboard: React.FC = () => {
               onClick={() => setStatusFilter('in_use')}
               className={`px-4 py-2 rounded-lg font-medium text-sm whitespace-nowrap transition-colors ${
                 statusFilter === 'in_use'
-                  ? 'bg-green-600 dark:bg-green-500 text-white'
-                  : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                  ? 'bg-green-600 text-white'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
               }`}
             >
               In Use ({allCounts.in_use})
@@ -348,8 +348,8 @@ export const Dashboard: React.FC = () => {
               onClick={() => setStatusFilter('available')}
               className={`px-4 py-2 rounded-lg font-medium text-sm whitespace-nowrap transition-colors ${
                 statusFilter === 'available'
-                  ? 'bg-blue-600 dark:bg-blue-500 text-white'
-                  : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
               }`}
             >
               Available ({allCounts.available})
@@ -358,8 +358,8 @@ export const Dashboard: React.FC = () => {
               onClick={() => setStatusFilter('retired')}
               className={`px-4 py-2 rounded-lg font-medium text-sm whitespace-nowrap transition-colors ${
                 statusFilter === 'retired'
-                  ? 'bg-red-600 dark:bg-red-500 text-white'
-                  : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                  ? 'bg-red-600 text-white'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
               }`}
             >
               Retired ({allCounts.retired})
@@ -371,7 +371,7 @@ export const Dashboard: React.FC = () => {
       {/* Content */}
       <div className="max-w-screen-xl mx-auto px-4 py-6">
         {error && (
-          <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-800 dark:text-red-300 px-4 py-3 rounded-lg mb-4">
+          <div className="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg mb-4">
             <p className="text-sm font-medium">{error}</p>
           </div>
         )}
@@ -398,7 +398,7 @@ export const Dashboard: React.FC = () => {
                 <button
                   onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
                   disabled={currentPage === 1}
-                  className="px-4 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  className="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -425,8 +425,8 @@ export const Dashboard: React.FC = () => {
                         onClick={() => setCurrentPage(pageNum)}
                         className={`w-10 h-10 rounded-lg font-medium transition-colors ${
                           currentPage === pageNum
-                            ? 'bg-blue-200 dark:bg-blue-600 text-black dark:text-white'
-                            : 'bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
+                            ? 'bg-blue-200 text-black'
+                            : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
                         }`}
                       >
                         {pageNum}
@@ -438,14 +438,14 @@ export const Dashboard: React.FC = () => {
                 <button
                   onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
                   disabled={currentPage === totalPages}
-                  className="px-4 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  className="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                   </svg>
                 </button>
 
-                <span className="ml-4 text-sm text-gray-600 dark:text-gray-400">
+                <span className="ml-4 text-sm text-gray-600">
                   Page {currentPage} of {totalPages}
                 </span>
               </div>
@@ -453,11 +453,11 @@ export const Dashboard: React.FC = () => {
           </>
         ) : (
           <div className="text-center py-12">
-            <svg className="w-16 h-16 text-gray-400 dark:text-gray-600 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-16 h-16 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
             </svg>
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">No equipment found</h3>
-            <p className="text-gray-600 dark:text-gray-400">{searchQuery ? 'Try adjusting your search' : 'No active assignments'}</p>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">No equipment found</h3>
+            <p className="text-gray-600">{searchQuery ? 'Try adjusting your search' : 'No active assignments'}</p>
           </div>
         )}
       </div>
