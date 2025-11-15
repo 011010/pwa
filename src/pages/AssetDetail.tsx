@@ -445,7 +445,7 @@ export const AssetDetail: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
+      <div className="flex items-center justify-center min-h-screen bg-gray-50">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600" />
       </div>
     );
@@ -502,7 +502,7 @@ export const AssetDetail: React.FC = () => {
       </AnimatePresence>
 
       {/* Header */}
-      <div className="bg-white shadow-sm sticky top-0 z-40">
+      <div className="bg-white shadow-sm sticky top-0 z-40 transition-colors">
         <div className="px-4 py-4">
           <div className="flex items-center">
             <button
@@ -515,7 +515,7 @@ export const AssetDetail: React.FC = () => {
                   navigate('/dashboard');
                 }
               }}
-              className="mr-3 p-2 -ml-2 text-gray-600"
+              className="mr-3 p-2 -ml-2 text-gray-600 transition-colors"
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -532,24 +532,24 @@ export const AssetDetail: React.FC = () => {
       {/* Content */}
       <div className="max-w-screen-xl mx-auto px-4 py-6 space-y-4">
         {/* Asset Info Card */}
-        <div className="bg-white rounded-lg shadow-soft p-6">
-          <h2 className="text-lg font-semibold mb-4">Asset Information</h2>
+        <div className="bg-white rounded-lg shadow-soft p-6 transition-colors">
+          <h2 className="text-lg font-semibold text-gray-900 mb-4">Asset Information</h2>
           <div className="space-y-3 text-sm">
-            <div><span className="text-gray-600">Model:</span> <span className="font-medium ml-2">{asset.model}</span></div>
-            <div><span className="text-gray-600">Serial:</span> <span className="font-medium ml-2">{asset.serial_number}</span></div>
-            <div><span className="text-gray-600">Category:</span> <span className="font-medium ml-2">{asset.category}</span></div>
-            <div><span className="text-gray-600">Status:</span> <span className="font-medium ml-2">{asset.status}</span></div>
-            <div><span className="text-gray-600">Location:</span> <span className="font-medium ml-2">{asset.location}</span></div>
+            <div><span className="text-gray-600">Model:</span> <span className="font-medium text-gray-900 ml-2">{asset.model}</span></div>
+            <div><span className="text-gray-600">Serial:</span> <span className="font-medium text-gray-900 ml-2">{asset.serial_number}</span></div>
+            <div><span className="text-gray-600">Category:</span> <span className="font-medium text-gray-900 ml-2">{asset.category}</span></div>
+            <div><span className="text-gray-600">Status:</span> <span className="font-medium text-gray-900 ml-2">{asset.status}</span></div>
+            <div><span className="text-gray-600">Location:</span> <span className="font-medium text-gray-900 ml-2">{asset.location}</span></div>
             {asset.assigned_to && (
-              <div><span className="text-gray-600">Assigned to:</span> <span className="font-medium ml-2">{asset.assigned_to.name}</span></div>
+              <div><span className="text-gray-600">Assigned to:</span> <span className="font-medium text-gray-900 ml-2">{asset.assigned_to.name}</span></div>
             )}
           </div>
         </div>
 
         {/* Photos Section */}
         {photos.length > 0 && (
-          <div className="bg-white rounded-lg shadow-soft p-6">
-            <h2 className="text-lg font-semibold mb-4">Photos ({photos.length})</h2>
+          <div className="bg-white rounded-lg shadow-soft p-6 transition-colors">
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">Photos ({photos.length})</h2>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
               {photos.map((photo) => (
                 <div key={photo.id} className="relative group">
@@ -582,11 +582,11 @@ export const AssetDetail: React.FC = () => {
 
         {/* Signatures Section */}
         {signatures.length > 0 && (
-          <div className="bg-white rounded-lg shadow-soft p-6">
-            <h2 className="text-lg font-semibold mb-4">Signatures ({signatures.length})</h2>
+          <div className="bg-white rounded-lg shadow-soft p-6 transition-colors">
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">Signatures ({signatures.length})</h2>
             <div className="space-y-4">
               {signatures.map((signature) => (
-                <div key={signature.id} className="border rounded-lg p-4 relative group">
+                <div key={signature.id} className="border border-gray-200 rounded-lg p-4 relative group transition-colors">
                   <img
                     src={signature.url}
                     alt="Signature"
@@ -618,12 +618,12 @@ export const AssetDetail: React.FC = () => {
 
         {/* Edit Form */}
         {isEditing && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="bg-white rounded-lg shadow-soft p-6">
-            <h2 className="text-lg font-semibold mb-4">Update Asset</h2>
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="bg-white rounded-lg shadow-soft p-6 transition-colors">
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">Update Asset</h2>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium mb-2">Status</label>
-                <select value={formData.status} onChange={(e) => setFormData({ ...formData, status: e.target.value as AssetStatus })} className="w-full px-3 py-2 border rounded-lg">
+                <label className="block text-sm font-medium text-gray-900 mb-2">Status</label>
+                <select value={formData.status} onChange={(e) => setFormData({ ...formData, status: e.target.value as AssetStatus })} className="w-full px-3 py-2 border border-gray-300 bg-white text-gray-900 rounded-lg transition-colors">
                   <option value="available">Available</option>
                   <option value="in_use">In Use</option>
                   <option value="maintenance">Maintenance</option>
@@ -632,12 +632,12 @@ export const AssetDetail: React.FC = () => {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium mb-2">Location</label>
-                <input type="text" value={formData.location} onChange={(e) => setFormData({ ...formData, location: e.target.value })} className="w-full px-3 py-2 border rounded-lg" />
+                <label className="block text-sm font-medium text-gray-900 mb-2">Location</label>
+                <input type="text" value={formData.location} onChange={(e) => setFormData({ ...formData, location: e.target.value })} className="w-full px-3 py-2 border border-gray-300 bg-white text-gray-900 rounded-lg transition-colors" />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-2">Comments</label>
-                <textarea value={formData.comments} onChange={(e) => setFormData({ ...formData, comments: e.target.value })} rows={3} className="w-full px-3 py-2 border rounded-lg" />
+                <label className="block text-sm font-medium text-gray-900 mb-2">Comments</label>
+                <textarea value={formData.comments} onChange={(e) => setFormData({ ...formData, comments: e.target.value })} rows={3} className="w-full px-3 py-2 border border-gray-300 bg-white text-gray-900 rounded-lg transition-colors" />
               </div>
               <div className="flex gap-3">
                 <button
@@ -658,7 +658,7 @@ export const AssetDetail: React.FC = () => {
         )}
 
         {/* Actions - Enhanced button visibility with better styling */}
-        <div className="bg-white rounded-lg shadow-soft p-4 space-y-3">
+        <div className="bg-white rounded-lg shadow-soft p-4 space-y-3 transition-colors">
           <button
             onClick={() => setIsEditing(!isEditing)}
             className="w-full flex items-center gap-3 p-4 bg-blue-50 hover:bg-blue-100 text-blue-700 font-medium rounded-lg transition-colors border border-blue-200"
@@ -704,7 +704,7 @@ export const AssetDetail: React.FC = () => {
       {/* Signature Modal */}
       {showSignature && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-lg w-full max-w-lg h-96">
+          <div className="bg-white rounded-lg w-full max-w-lg h-96 transition-colors">
             <SignaturePad onSave={handleSignatureSave} onClear={() => setShowSignature(false)} />
           </div>
         </div>
@@ -716,7 +716,7 @@ export const AssetDetail: React.FC = () => {
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="bg-white rounded-lg p-6 max-w-md w-full"
+            className="bg-white rounded-lg p-6 max-w-md w-full transition-colors"
           >
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold text-gray-900">Capture Photo</h3>

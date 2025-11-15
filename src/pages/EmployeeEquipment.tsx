@@ -73,14 +73,14 @@ export const EmployeeEquipment: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-20">
+    <div className="min-h-screen bg-gray-50 pb-20 transition-colors">
       {/* Header */}
-      <div className="bg-white shadow-sm sticky top-0 z-40">
+      <div className="bg-white shadow-sm sticky top-0 z-40 transition-colors">
         <div className="max-w-screen-xl mx-auto px-4 py-4">
           <div className="flex items-center gap-3 mb-2">
             <button
               onClick={() => navigate('/dashboard')}
-              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              className="p-2 hover:bg-gray-100 rounded-lg transition-colors text-gray-900"
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -100,7 +100,7 @@ export const EmployeeEquipment: React.FC = () => {
           <motion.div
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg mb-4"
+            className="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg mb-4 transition-colors"
           >
             <p className="text-sm font-medium">{error}</p>
           </motion.div>
@@ -112,7 +112,7 @@ export const EmployeeEquipment: React.FC = () => {
           </div>
         ) : assignments.length > 0 ? (
           <>
-            <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+            <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg transition-colors">
               <p className="text-sm text-blue-800">
                 <span className="font-semibold">{assignments.length}</span> equipment(s) assigned to this person
               </p>
@@ -132,11 +132,11 @@ export const EmployeeEquipment: React.FC = () => {
           </>
         ) : (
           <div className="text-center py-12">
-            <svg className="w-16 h-16 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-16 h-16 text-gray-400 mx-auto mb-4 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
             </svg>
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">No equipment assigned</h3>
-            <p className="text-gray-600">This employee has no equipment assigned</p>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2 transition-colors">No equipment assigned</h3>
+            <p className="text-gray-600 transition-colors">This employee has no equipment assigned</p>
           </div>
         )}
       </div>
