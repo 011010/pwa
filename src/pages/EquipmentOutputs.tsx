@@ -34,10 +34,9 @@ export const EquipmentOutputs: React.FC = () => {
       setIsLoading(true);
       setError(null);
 
-      // Fetch outputs based on filter
+      // Fetch ALL outputs (API doesn't accept is_active parameter)
       const params = {
         per_page: 100,
-        is_active: filter === 'active' ? true : filter === 'returned' ? false : undefined,
       };
 
       const [outputsResponse, statsData] = await Promise.all([
@@ -45,7 +44,15 @@ export const EquipmentOutputs: React.FC = () => {
         equipmentOutputService.getEquipmentOutputStats(),
       ]);
 
-      setOutputs(outputsResponse.data);
+      // Filter on client side based on filter selection
+      let filteredOutputs = outputsResponse.data;
+      if (filter === 'active') {
+        filteredOutputs = outputsResponse.data.filter(output => output.is_active);
+      } else if (filter === 'returned') {
+        filteredOutputs = outputsResponse.data.filter(output => !output.is_active);
+      }
+
+      setOutputs(filteredOutputs);
       setStats(statsData);
     } catch (err: any) {
       console.error('Failed to fetch equipment outputs:', err);
@@ -64,9 +71,18 @@ export const EquipmentOutputs: React.FC = () => {
 
     try {
       setIsLoading(true);
-      const isActive = filter === 'active' ? true : filter === 'returned' ? false : undefined;
-      const results = await equipmentOutputService.searchEquipmentOutputs(query, isActive);
-      setOutputs(results);
+      // Search without is_active filter, then filter on client side
+      const results = await equipmentOutputService.searchEquipmentOutputs(query);
+
+      // Filter on client side based on filter selection
+      let filteredResults = results;
+      if (filter === 'active') {
+        filteredResults = results.filter(output => output.is_active);
+      } else if (filter === 'returned') {
+        filteredResults = results.filter(output => !output.is_active);
+      }
+
+      setOutputs(filteredResults);
     } catch (err: any) {
       console.error('Search failed:', err);
       setError(err.message || 'Search failed');

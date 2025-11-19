@@ -171,13 +171,11 @@ export const getActiveOutputsByEmployee = async (
  * Search equipment outputs
  */
 export const searchEquipmentOutputs = async (
-  query: string,
-  isActive?: boolean
+  query: string
 ): Promise<EquipmentOutput[]> => {
   try {
     const response = await getEquipmentOutputs({
       search: query,
-      is_active: isActive,
       per_page: 100
     });
     return response.data;

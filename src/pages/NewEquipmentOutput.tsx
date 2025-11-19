@@ -1,33 +1,80 @@
 /**
  * New Equipment Output Form Component
  *
- * Form for creating a new equipment output (home office assignment).
+ * Form for creating equipment outputs (home office assignment).
+ * Flow: Select employee → Select multiple equipment → Add description per equipment → Submit all
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { equipmentOutputService } from '../services/equipmentOutputService';
 import { equipmentService } from '../services/equipmentService';
-import type { CreateEquipmentOutputData, EquipmentAssignment } from '../types';
+import type { EquipmentAssignment } from '../types';
+
+interface SelectedEmployee {
+  id: number;
+  name: string;
+  email: string;
+}
+
+interface SelectedEquipment {
+  equipment_inventory_id: number;
+  name: string;
+  serial_number: string;
+  model: string;
+  output_comments: string;
+}
 
 export const NewEquipmentOutput: React.FC = () => {
   const navigate = useNavigate();
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [equipmentSearch, setEquipmentSearch] = useState('');
-  const [employeeSearch, setEmployeeSearch] = useState('');
-  const [equipmentList, setEquipmentList] = useState<EquipmentAssignment[]>([]);
-  const [employeeList, setEmployeeList] = useState<Array<{ id: number; name: string; email: string }>>([]);
-  const [isLoadingEquipment, setIsLoadingEquipment] = useState(false);
-  const [isLoadingEmployees, setIsLoadingEmployees] = useState(false);
+  const [step, setStep] = useState<1 | 2 | 3>(1); // 1: Select employee, 2: Select equipment, 3: Add descriptions
 
-  const [formData, setFormData] = useState<CreateEquipmentOutputData>({
-    equipment_inventory_id: 0,
-    employee_id: 0,
-    output_comments: '',
-    output_date: new Date().toISOString().split('T')[0], // Today's date in Y-m-d format
-  });
+  // Employee selection
+  const [employeeSearch, setEmployeeSearch] = useState('');
+  const [employeeList, setEmployeeList] = useState<Array<{ id: number; name: string; email: string }>>([]);
+  const [isLoadingEmployees, setIsLoadingEmployees] = useState(false);
+  const [selectedEmployee, setSelectedEmployee] = useState<SelectedEmployee | null>(null);
+
+  // Equipment selection
+  const [equipmentSearch, setEquipmentSearch] = useState('');
+  const [equipmentList, setEquipmentList] = useState<EquipmentAssignment[]>([]);
+  const [isLoadingEquipment, setIsLoadingEquipment] = useState(false);
+  const [selectedEquipments, setSelectedEquipments] = useState<SelectedEquipment[]>([]);
+
+  // Common
+  const [outputDate, setOutputDate] = useState(new Date().toISOString().split('T')[0]);
+  const [error, setError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Search employees
+  const handleEmployeeSearch = async (query: string) => {
+    setEmployeeSearch(query);
+    if (!query.trim()) {
+      setEmployeeList([]);
+      return;
+    }
+
+    try {
+      setIsLoadingEmployees(true);
+      const results = await equipmentService.searchEquipmentAssignments(query);
+      const uniqueEmployees = results
+        .filter((r) => r.metadata?.employee_id && r.metadata?.employee_name)
+        .map((r) => ({
+          id: r.metadata!.employee_id,
+          name: r.metadata!.employee_name,
+          email: r.metadata!.employee_email || '',
+        }))
+        .filter(
+          (emp, index, self) => index === self.findIndex((e) => e.id === emp.id)
+        );
+      setEmployeeList(uniqueEmployees);
+    } catch (err) {
+      console.error('Employee search failed:', err);
+    } finally {
+      setIsLoadingEmployees(false);
+    }
+  };
 
   // Search equipment
   const handleEquipmentSearch = async (query: string) => {
@@ -48,47 +95,65 @@ export const NewEquipmentOutput: React.FC = () => {
     }
   };
 
-  // Note: Employee search would require a dedicated employee API endpoint
-  // For now, we'll use a simplified approach
-  const handleEmployeeSearch = async (query: string) => {
-    setEmployeeSearch(query);
-    if (!query.trim()) {
-      setEmployeeList([]);
-      return;
-    }
-
-    try {
-      setIsLoadingEmployees(true);
-      // Get employees from equipment assignments
-      const results = await equipmentService.searchEquipmentAssignments(query);
-      const uniqueEmployees = results
-        .filter((r) => r.metadata?.employee_id && r.metadata?.employee_name)
-        .map((r) => ({
-          id: r.metadata!.employee_id,
-          name: r.metadata!.employee_name,
-          email: r.metadata!.employee_email || '',
-        }))
-        .filter(
-          (emp, index, self) => index === self.findIndex((e) => e.id === emp.id)
-        );
-      setEmployeeList(uniqueEmployees);
-    } catch (err) {
-      console.error('Employee search failed:', err);
-    } finally {
-      setIsLoadingEmployees(false);
-    }
+  const handleEmployeeSelect = (employee: { id: number; name: string; email: string }) => {
+    setSelectedEmployee(employee);
+    setEmployeeSearch(employee.name);
+    setEmployeeList([]);
+    setStep(2);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleEquipmentAdd = (equipment: EquipmentAssignment) => {
+    const equipmentId = equipment.metadata?.equipment_id || equipment.id;
 
-    if (!formData.equipment_inventory_id || !formData.employee_id) {
-      setError('Por favor selecciona un equipo y un empleado');
+    // Check if already added
+    if (selectedEquipments.some(e => e.equipment_inventory_id === equipmentId)) {
+      alert('Este equipo ya fue agregado');
       return;
     }
 
-    if (!formData.output_comments.trim()) {
-      setError('Por favor ingresa comentarios sobre la salida del equipo');
+    setSelectedEquipments([
+      ...selectedEquipments,
+      {
+        equipment_inventory_id: equipmentId,
+        name: equipment.equipment,
+        serial_number: equipment.serial_number,
+        model: equipment.model,
+        output_comments: '',
+      }
+    ]);
+    setEquipmentSearch('');
+    setEquipmentList([]);
+  };
+
+  const handleEquipmentRemove = (equipmentId: number) => {
+    setSelectedEquipments(selectedEquipments.filter(e => e.equipment_inventory_id !== equipmentId));
+  };
+
+  const handleCommentChange = (equipmentId: number, comment: string) => {
+    setSelectedEquipments(
+      selectedEquipments.map(e =>
+        e.equipment_inventory_id === equipmentId
+          ? { ...e, output_comments: comment }
+          : e
+      )
+    );
+  };
+
+  const handleSubmit = async () => {
+    if (!selectedEmployee) {
+      setError('Por favor selecciona un empleado');
+      return;
+    }
+
+    if (selectedEquipments.length === 0) {
+      setError('Por favor selecciona al menos un equipo');
+      return;
+    }
+
+    // Validate all equipment have comments
+    const missingComments = selectedEquipments.filter(e => !e.output_comments.trim());
+    if (missingComments.length > 0) {
+      setError('Todos los equipos deben tener comentarios');
       return;
     }
 
@@ -96,11 +161,21 @@ export const NewEquipmentOutput: React.FC = () => {
       setIsSubmitting(true);
       setError(null);
 
-      await equipmentOutputService.createEquipmentOutput(formData);
+      // Create one output per equipment
+      const promises = selectedEquipments.map(equipment =>
+        equipmentOutputService.createEquipmentOutput({
+          equipment_inventory_id: equipment.equipment_inventory_id,
+          employee_id: selectedEmployee.id,
+          output_comments: equipment.output_comments,
+          output_date: outputDate,
+        })
+      );
+
+      await Promise.all(promises);
       navigate('/equipment-outputs');
     } catch (err: any) {
-      console.error('Failed to create equipment output:', err);
-      setError(err.message || 'Failed to create equipment output');
+      console.error('Failed to create equipment outputs:', err);
+      setError(err.message || 'Failed to create equipment outputs');
     } finally {
       setIsSubmitting(false);
     }
@@ -122,13 +197,24 @@ export const NewEquipmentOutput: React.FC = () => {
             </button>
             <div>
               <h1 className="text-2xl font-bold">Nueva Salida de Equipo</h1>
-              <p className="text-blue-100 text-sm">Asignar equipo para home office</p>
+              <p className="text-blue-100 text-sm">
+                {step === 1 && 'Paso 1: Seleccionar empleado'}
+                {step === 2 && 'Paso 2: Seleccionar equipos'}
+                {step === 3 && 'Paso 3: Agregar descripciones'}
+              </p>
             </div>
+          </div>
+
+          {/* Progress Steps */}
+          <div className="mt-4 flex items-center gap-2">
+            <div className={`flex-1 h-2 rounded-full ${step >= 1 ? 'bg-white' : 'bg-white/30'}`} />
+            <div className={`flex-1 h-2 rounded-full ${step >= 2 ? 'bg-white' : 'bg-white/30'}`} />
+            <div className={`flex-1 h-2 rounded-full ${step >= 3 ? 'bg-white' : 'bg-white/30'}`} />
           </div>
         </div>
       </div>
 
-      {/* Form */}
+      {/* Content */}
       <div className="max-w-4xl mx-auto px-4 py-6">
         {error && (
           <motion.div
@@ -140,139 +226,253 @@ export const NewEquipmentOutput: React.FC = () => {
           </motion.div>
         )}
 
-        <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 space-y-6">
-          {/* Equipment Selection */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Equipo *
-            </label>
-            <input
-              type="text"
-              value={equipmentSearch}
-              onChange={(e) => handleEquipmentSearch(e.target.value)}
-              placeholder="Buscar equipo por serial, nombre, modelo..."
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
-            {isLoadingEquipment && (
-              <p className="text-sm text-gray-500 mt-2">Buscando equipos...</p>
-            )}
-            {equipmentList.length > 0 && (
-              <div className="mt-2 max-h-60 overflow-y-auto border border-gray-200 rounded-lg">
-                {equipmentList.map((equipment) => (
+        <AnimatePresence mode="wait">
+          {/* Step 1: Select Employee */}
+          {step === 1 && (
+            <motion.div
+              key="step1"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              className="bg-white rounded-lg shadow-sm border border-gray-200 p-6"
+            >
+              <h2 className="text-lg font-semibold text-gray-900 mb-4">Seleccionar Empleado</h2>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Buscar empleado
+                </label>
+                <input
+                  type="text"
+                  value={employeeSearch}
+                  onChange={(e) => handleEmployeeSearch(e.target.value)}
+                  placeholder="Buscar por nombre o email..."
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  autoFocus
+                />
+                {isLoadingEmployees && (
+                  <p className="text-sm text-gray-500 mt-2">Buscando empleados...</p>
+                )}
+                {employeeList.length > 0 && (
+                  <div className="mt-2 max-h-80 overflow-y-auto border border-gray-200 rounded-lg">
+                    {employeeList.map((employee) => (
+                      <button
+                        key={employee.id}
+                        type="button"
+                        onClick={() => handleEmployeeSelect(employee)}
+                        className="w-full text-left px-4 py-3 hover:bg-blue-50 border-b border-gray-100 last:border-b-0 transition-colors"
+                      >
+                        <p className="font-medium text-gray-900">{employee.name}</p>
+                        {employee.email && (
+                          <p className="text-sm text-gray-600">{employee.email}</p>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          )}
+
+          {/* Step 2: Select Equipment */}
+          {step === 2 && (
+            <motion.div
+              key="step2"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              className="space-y-4"
+            >
+              {/* Selected Employee Info */}
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-blue-600 font-medium">Empleado seleccionado</p>
+                    <p className="text-lg font-semibold text-blue-900">{selectedEmployee?.name}</p>
+                    {selectedEmployee?.email && (
+                      <p className="text-sm text-blue-700">{selectedEmployee.email}</p>
+                    )}
+                  </div>
                   <button
-                    key={equipment.id}
-                    type="button"
                     onClick={() => {
-                      setFormData({ ...formData, equipment_inventory_id: equipment.metadata?.equipment_id || equipment.id });
-                      setEquipmentSearch(`${equipment.equipment} - ${equipment.serial_number}`);
-                      setEquipmentList([]);
+                      setSelectedEmployee(null);
+                      setEmployeeSearch('');
+                      setStep(1);
                     }}
-                    className="w-full text-left px-4 py-3 hover:bg-gray-50 border-b border-gray-100 last:border-b-0"
+                    className="text-blue-600 hover:text-blue-800 text-sm font-medium"
                   >
-                    <p className="font-medium text-gray-900">{equipment.equipment}</p>
+                    Cambiar
+                  </button>
+                </div>
+              </div>
+
+              {/* Equipment Search */}
+              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <h2 className="text-lg font-semibold text-gray-900 mb-4">Agregar Equipos</h2>
+
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Buscar equipo
+                  </label>
+                  <input
+                    type="text"
+                    value={equipmentSearch}
+                    onChange={(e) => handleEquipmentSearch(e.target.value)}
+                    placeholder="Buscar por serial, nombre, modelo..."
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                  {isLoadingEquipment && (
+                    <p className="text-sm text-gray-500 mt-2">Buscando equipos...</p>
+                  )}
+                  {equipmentList.length > 0 && (
+                    <div className="mt-2 max-h-60 overflow-y-auto border border-gray-200 rounded-lg">
+                      {equipmentList.map((equipment) => (
+                        <button
+                          key={equipment.id}
+                          type="button"
+                          onClick={() => handleEquipmentAdd(equipment)}
+                          className="w-full text-left px-4 py-3 hover:bg-blue-50 border-b border-gray-100 last:border-b-0 transition-colors"
+                        >
+                          <p className="font-medium text-gray-900">{equipment.equipment}</p>
+                          <p className="text-sm text-gray-600">
+                            Serial: {equipment.serial_number} | Modelo: {equipment.model}
+                          </p>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Selected Equipment List */}
+                {selectedEquipments.length > 0 && (
+                  <div className="space-y-2">
+                    <p className="text-sm font-medium text-gray-700">
+                      Equipos seleccionados ({selectedEquipments.length})
+                    </p>
+                    {selectedEquipments.map((equipment) => (
+                      <div
+                        key={equipment.equipment_inventory_id}
+                        className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200"
+                      >
+                        <div className="flex-1">
+                          <p className="font-medium text-gray-900">{equipment.name}</p>
+                          <p className="text-sm text-gray-600">Serial: {equipment.serial_number}</p>
+                        </div>
+                        <button
+                          onClick={() => handleEquipmentRemove(equipment.equipment_inventory_id)}
+                          className="ml-3 text-red-600 hover:text-red-800"
+                        >
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Date Selection */}
+              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Fecha de Salida
+                </label>
+                <input
+                  type="date"
+                  value={outputDate}
+                  onChange={(e) => setOutputDate(e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+
+              {/* Actions */}
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setStep(1)}
+                  className="px-4 py-3 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition-colors"
+                >
+                  Anterior
+                </button>
+                <button
+                  onClick={() => {
+                    if (selectedEquipments.length === 0) {
+                      setError('Por favor selecciona al menos un equipo');
+                      return;
+                    }
+                    setError(null);
+                    setStep(3);
+                  }}
+                  className="flex-1 px-4 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors"
+                >
+                  Siguiente: Agregar Descripciones
+                </button>
+              </div>
+            </motion.div>
+          )}
+
+          {/* Step 3: Add Descriptions */}
+          {step === 3 && (
+            <motion.div
+              key="step3"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 space-y-6"
+            >
+              <div>
+                <h2 className="text-lg font-semibold text-gray-900 mb-2">Agregar Comentarios</h2>
+                <p className="text-sm text-gray-600">
+                  Agrega comentarios sobre la salida de cada equipo (motivo, condiciones, etc.)
+                </p>
+              </div>
+
+              {selectedEquipments.map((equipment, index) => (
+                <div key={equipment.equipment_inventory_id} className="border border-gray-200 rounded-lg p-4">
+                  <div className="mb-3">
+                    <p className="font-medium text-gray-900">{equipment.name}</p>
                     <p className="text-sm text-gray-600">
                       Serial: {equipment.serial_number} | Modelo: {equipment.model}
                     </p>
-                  </button>
-                ))}
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Comentarios de Salida *
+                    </label>
+                    <textarea
+                      value={equipment.output_comments}
+                      onChange={(e) => handleCommentChange(equipment.equipment_inventory_id, e.target.value)}
+                      placeholder="Describe el motivo de la salida, condiciones del equipo, etc..."
+                      rows={3}
+                      maxLength={350}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      {equipment.output_comments.length}/350 caracteres
+                    </p>
+                  </div>
+                </div>
+              ))}
+
+              {/* Actions */}
+              <div className="flex gap-3 pt-4">
+                <button
+                  onClick={() => setStep(2)}
+                  disabled={isSubmitting}
+                  className="px-4 py-3 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition-colors disabled:opacity-50"
+                >
+                  Anterior
+                </button>
+                <button
+                  onClick={handleSubmit}
+                  disabled={isSubmitting || selectedEquipments.some(e => !e.output_comments.trim())}
+                  className="flex-1 px-4 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isSubmitting ? 'Creando salidas...' : `Crear ${selectedEquipments.length} Salida${selectedEquipments.length > 1 ? 's' : ''}`}
+                </button>
               </div>
-            )}
-            {formData.equipment_inventory_id > 0 && (
-              <p className="text-sm text-green-600 mt-2">✓ Equipo seleccionado</p>
-            )}
-          </div>
-
-          {/* Employee Selection */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Empleado *
-            </label>
-            <input
-              type="text"
-              value={employeeSearch}
-              onChange={(e) => handleEmployeeSearch(e.target.value)}
-              placeholder="Buscar empleado por nombre o email..."
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
-            {isLoadingEmployees && (
-              <p className="text-sm text-gray-500 mt-2">Buscando empleados...</p>
-            )}
-            {employeeList.length > 0 && (
-              <div className="mt-2 max-h-60 overflow-y-auto border border-gray-200 rounded-lg">
-                {employeeList.map((employee) => (
-                  <button
-                    key={employee.id}
-                    type="button"
-                    onClick={() => {
-                      setFormData({ ...formData, employee_id: employee.id });
-                      setEmployeeSearch(employee.name);
-                      setEmployeeList([]);
-                    }}
-                    className="w-full text-left px-4 py-3 hover:bg-gray-50 border-b border-gray-100 last:border-b-0"
-                  >
-                    <p className="font-medium text-gray-900">{employee.name}</p>
-                    {employee.email && (
-                      <p className="text-sm text-gray-600">{employee.email}</p>
-                    )}
-                  </button>
-                ))}
-              </div>
-            )}
-            {formData.employee_id > 0 && (
-              <p className="text-sm text-green-600 mt-2">✓ Empleado seleccionado</p>
-            )}
-          </div>
-
-          {/* Output Date */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Fecha de Salida *
-            </label>
-            <input
-              type="date"
-              value={formData.output_date}
-              onChange={(e) => setFormData({ ...formData, output_date: e.target.value })}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              required
-            />
-          </div>
-
-          {/* Output Comments */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Comentarios de Salida *
-            </label>
-            <textarea
-              value={formData.output_comments}
-              onChange={(e) => setFormData({ ...formData, output_comments: e.target.value })}
-              placeholder="Motivo de la salida, condiciones del equipo, etc..."
-              rows={4}
-              maxLength={350}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              required
-            />
-            <p className="text-xs text-gray-500 mt-1">{formData.output_comments.length}/350 caracteres</p>
-          </div>
-
-          {/* Submit Buttons */}
-          <div className="flex gap-3 pt-4">
-            <button
-              type="button"
-              onClick={() => navigate('/equipment-outputs')}
-              disabled={isSubmitting}
-              className="flex-1 px-4 py-3 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition-colors disabled:opacity-50"
-            >
-              Cancelar
-            </button>
-            <button
-              type="submit"
-              disabled={isSubmitting || !formData.equipment_inventory_id || !formData.employee_id || !formData.output_comments.trim()}
-              className="flex-1 px-4 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {isSubmitting ? 'Creando...' : 'Crear Salida'}
-            </button>
-          </div>
-        </form>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </div>
   );
