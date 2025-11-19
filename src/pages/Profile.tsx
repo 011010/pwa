@@ -90,6 +90,9 @@ export const Profile: React.FC = () => {
     );
   }
 
+  // Get display name: prefer full_name, fallback to name
+  const displayName = user.full_name || user.name;
+
   return (
     <div className="min-h-screen bg-gray-50 pb-20 transition-colors">
       {/* Header */}
@@ -111,11 +114,11 @@ export const Profile: React.FC = () => {
           <div className="flex items-center space-x-4">
             <div className="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center">
               <span className="text-3xl font-bold">
-                {user.name.charAt(0).toUpperCase()}
+                {displayName.charAt(0).toUpperCase()}
               </span>
             </div>
             <div>
-              <h2 className="text-2xl font-bold">{user.name}</h2>
+              <h2 className="text-2xl font-bold">{displayName}</h2>
               <p className="text-primary-100">{user.email}</p>
             </div>
           </div>
@@ -162,7 +165,7 @@ export const Profile: React.FC = () => {
             </div>
             <div>
               <label className="text-sm font-medium text-gray-500">Nombre Completo</label>
-              <p className="text-gray-900 font-medium">{user.name}</p>
+              <p className="text-gray-900 font-medium">{displayName}</p>
             </div>
             <div>
               <label className="text-sm font-medium text-gray-500">Correo Electrónico</label>

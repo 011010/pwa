@@ -98,4 +98,12 @@ export const endpoints = {
     update: (id: number) => `/categories/${id}`,
     delete: (id: number) => `/categories/${id}`,
   },
+  equipmentOutputs: {
+    list: '/equipment-outputs',
+    detail: (id: number) => `/equipment-outputs/${id}`,
+    create: '/equipment-outputs',
+    update: (id: number) => `/equipment-outputs/${id}`,
+    stats: '/equipment-outputs-stats',
+    activeByEmployee: (employeeId: number) => `/employees/${employeeId}/active-equipment-outputs`,
+  },
 } as const;
