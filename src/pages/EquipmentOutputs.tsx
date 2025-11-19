@@ -150,8 +150,8 @@ export const EquipmentOutputs: React.FC = () => {
                 </svg>
               </button>
               <div>
-                <h1 className="text-2xl font-bold">Salidas de Equipos</h1>
-                <p className="text-blue-100 text-sm">Gestión de Home Office</p>
+                <h1 className="text-2xl font-bold">Equipment Departures</h1>
+                <p className="text-blue-100 text-sm">Home Office Management</p>
               </div>
             </div>
             <button
@@ -161,7 +161,7 @@ export const EquipmentOutputs: React.FC = () => {
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
               </svg>
-              Nueva Salida
+              New Departure
             </button>
           </div>
 
@@ -170,15 +170,15 @@ export const EquipmentOutputs: React.FC = () => {
             <div className="grid grid-cols-3 gap-3">
               <div className="bg-white/10 backdrop-blur-sm rounded-lg p-3 text-center">
                 <div className="text-2xl font-bold">{stats.total_outputs}</div>
-                <div className="text-xs text-blue-100">Total</div>
+                <div className="text-xs text-blue-100">All</div>
               </div>
               <div className="bg-white/10 backdrop-blur-sm rounded-lg p-3 text-center">
                 <div className="text-2xl font-bold">{stats.active_outputs}</div>
-                <div className="text-xs text-blue-100">Activos</div>
+                <div className="text-xs text-blue-100">Active</div>
               </div>
               <div className="bg-white/10 backdrop-blur-sm rounded-lg p-3 text-center">
                 <div className="text-2xl font-bold">{stats.returned_outputs}</div>
-                <div className="text-xs text-blue-100">Devueltos</div>
+                <div className="text-xs text-blue-100">Returned</div>
               </div>
             </div>
           )}
@@ -193,7 +193,7 @@ export const EquipmentOutputs: React.FC = () => {
             type="text"
             value={searchQuery}
             onChange={(e) => handleSearch(e.target.value)}
-            placeholder="Buscar por empleado, serial, modelo..."
+            placeholder="Search by employee, serial number, model..."
             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           />
 
@@ -206,7 +206,7 @@ export const EquipmentOutputs: React.FC = () => {
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
               }`}
             >
-              Activos
+              Active
             </button>
             <button
               onClick={() => setFilter('returned')}
@@ -216,7 +216,7 @@ export const EquipmentOutputs: React.FC = () => {
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
               }`}
             >
-              Devueltos
+              Returned
             </button>
             <button
               onClick={() => setFilter('all')}
@@ -226,7 +226,7 @@ export const EquipmentOutputs: React.FC = () => {
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
               }`}
             >
-              Todos
+              All
             </button>
           </div>
         </div>
@@ -267,7 +267,7 @@ export const EquipmentOutputs: React.FC = () => {
                             : 'bg-gray-100 text-gray-700'
                         }`}
                       >
-                        {output.is_active ? 'Activo' : 'Devuelto'}
+                        {output.is_active ? 'Active' : 'Returned'}
                       </span>
                     </div>
 
@@ -276,28 +276,28 @@ export const EquipmentOutputs: React.FC = () => {
                         <span className="font-medium">Serial:</span> {output.equipment.serial_number}
                       </p>
                       <p>
-                        <span className="font-medium">Modelo:</span> {output.equipment.model}
+                        <span className="font-medium">Model:</span> {output.equipment.model}
                       </p>
                       <p>
-                        <span className="font-medium">Empleado:</span> {output.employee.full_name}
+                        <span className="font-medium">Employee:</span> {output.employee.full_name}
                       </p>
                       <p>
-                        <span className="font-medium">Departamento:</span> {output.employee.department}
+                        <span className="font-medium">Departament:</span> {output.employee.department}
                       </p>
                       <p>
-                        <span className="font-medium">Fecha salida:</span> {formatDate(output.output_date)}
+                        <span className="font-medium">Output Date:</span> {formatDate(output.output_date)}
                       </p>
                       {output.input_date && (
                         <p>
-                          <span className="font-medium">Fecha devolución:</span> {formatDate(output.input_date)}
+                          <span className="font-medium">Input Date:</span> {formatDate(output.input_date)}
                         </p>
                       )}
                       <p className="text-xs italic mt-2">
-                        <span className="font-medium">Comentarios salida:</span> {output.output_comments}
+                        <span className="font-medium">Output Comments:</span> {output.output_comments}
                       </p>
                       {output.input_comments && (
                         <p className="text-xs italic">
-                          <span className="font-medium">Comentarios devolución:</span> {output.input_comments}
+                          <span className="font-medium">Input Comments:</span> {output.input_comments}
                         </p>
                       )}
                     </div>
@@ -308,7 +308,7 @@ export const EquipmentOutputs: React.FC = () => {
                       onClick={() => handleReturnClick(output)}
                       className="ml-4 bg-red-600 text-white px-3 py-2 rounded-lg text-sm font-medium hover:bg-red-700 transition-colors"
                     >
-                      Marcar Devolución
+                      Mark as Returned
                     </button>
                   )}
                 </div>
@@ -330,8 +330,8 @@ export const EquipmentOutputs: React.FC = () => {
                 d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
               />
             </svg>
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">No hay salidas de equipos</h3>
-            <p className="text-gray-600">No se encontraron salidas de equipos con los filtros seleccionados</p>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">There are no equipment outputs.</h3>
+            <p className="text-gray-600">No equipment outputs were found with the selected filters.</p>
           </div>
         )}
       </div>
@@ -340,7 +340,7 @@ export const EquipmentOutputs: React.FC = () => {
       {showReturnModal && selectedOutput && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-lg max-w-md w-full p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Marcar como Devuelto</h3>
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Mark as Returned</h3>
 
             <div className="mb-4 p-3 bg-gray-50 rounded-lg">
               <p className="text-sm font-medium text-gray-900">{selectedOutput.equipment.name}</p>
@@ -350,17 +350,17 @@ export const EquipmentOutputs: React.FC = () => {
 
             <div className="mb-4">
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Comentarios de Devolución *
+                Return Comments *
               </label>
               <textarea
                 value={returnComments}
                 onChange={(e) => setReturnComments(e.target.value)}
-                placeholder="Describe el estado del equipo al devolverse..."
+                placeholder="Describe the condition of the equipment when returned..."
                 rows={4}
                 maxLength={350}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
-              <p className="text-xs text-gray-500 mt-1">{returnComments.length}/350 caracteres</p>
+              <p className="text-xs text-gray-500 mt-1">{returnComments.length}/350 characters</p>
             </div>
 
             <div className="flex gap-3">
@@ -369,14 +369,14 @@ export const EquipmentOutputs: React.FC = () => {
                 disabled={isReturning}
                 className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition-colors disabled:opacity-50"
               >
-                Cancelar
+                Cancel
               </button>
               <button
                 onClick={handleReturnSubmit}
                 disabled={isReturning || !returnComments.trim()}
                 className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg font-medium hover:bg-red-700 transition-colors disabled:opacity-50"
               >
-                {isReturning ? 'Procesando...' : 'Confirmar Devolución'}
+                {isReturning ? 'Processing...' : 'Confirm Return'}
               </button>
             </div>
           </div>

@@ -193,11 +193,11 @@ export const NewEquipmentOutput: React.FC = () => {
               </svg>
             </button>
             <div>
-              <h1 className="text-2xl font-bold">Nueva Salida de Equipo</h1>
+              <h1 className="text-2xl font-bold">New Equipment Departure</h1>
               <p className="text-blue-100 text-sm">
-                {step === 1 && 'Paso 1: Seleccionar empleado'}
-                {step === 2 && 'Paso 2: Seleccionar equipos'}
-                {step === 3 && 'Paso 3: Agregar descripciones'}
+                {step === 1 && 'Step 1: Select employee'}
+                {step === 2 && 'Step 2: Select equipment'}
+                {step === 3 && 'Step 3: Add descriptions'}
               </p>
             </div>
           </div>
@@ -233,22 +233,22 @@ export const NewEquipmentOutput: React.FC = () => {
               exit={{ opacity: 0, x: -20 }}
               className="bg-white rounded-lg shadow-sm border border-gray-200 p-6"
             >
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">Seleccionar Empleado</h2>
+              <h2 className="text-lg font-semibold text-gray-900 mb-4">Select employee</h2>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Buscar empleado
+                  Search employee
                 </label>
                 <input
                   type="text"
                   value={employeeSearch}
                   onChange={(e) => handleEmployeeSearch(e.target.value)}
-                  placeholder="Buscar por nombre o email..."
+                  placeholder="Search by name or email..."
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   autoFocus
                 />
                 {isLoadingEmployees && (
-                  <p className="text-sm text-gray-500 mt-2">Buscando empleados...</p>
+                  <p className="text-sm text-gray-500 mt-2">Looking for employees...</p>
                 )}
                 {employeeList.length > 0 && (
                   <div className="mt-2 max-h-80 overflow-y-auto border border-gray-200 rounded-lg">
@@ -284,7 +284,7 @@ export const NewEquipmentOutput: React.FC = () => {
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-blue-600 font-medium">Empleado seleccionado</p>
+                    <p className="text-sm text-blue-600 font-medium">Selected employee</p>
                     <p className="text-lg font-semibold text-blue-900">{selectedEmployee?.name}</p>
                     {selectedEmployee?.email && (
                       <p className="text-sm text-blue-700">{selectedEmployee.email}</p>
@@ -298,24 +298,24 @@ export const NewEquipmentOutput: React.FC = () => {
                     }}
                     className="text-blue-600 hover:text-blue-800 text-sm font-medium"
                   >
-                    Cambiar
+                    Change
                   </button>
                 </div>
               </div>
 
               {/* Equipment List */}
               <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                <h2 className="text-lg font-semibold text-gray-900 mb-4">Equipos del Empleado</h2>
+                <h2 className="text-lg font-semibold text-gray-900 mb-4">Employee Equipment</h2>
 
                 {isLoadingEquipment ? (
                   <div className="text-center py-8">
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2" />
-                    <p className="text-sm text-gray-500">Cargando equipos...</p>
+                    <p className="text-sm text-gray-500">Loading equipment...</p>
                   </div>
                 ) : equipmentList.length > 0 ? (
                   <div className="mb-4">
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Seleccionar equipos que saldrán para home office
+                      Select equipment that will be used for home office
                     </label>
                     <div className="max-h-96 overflow-y-auto border border-gray-200 rounded-lg">
                       {equipmentList.map((equipment) => {
@@ -338,7 +338,7 @@ export const NewEquipmentOutput: React.FC = () => {
                               <div className="flex-1">
                                 <p className="font-medium text-gray-900">{equipment.equipment}</p>
                                 <p className="text-sm text-gray-600">
-                                  Serial: {equipment.serial_number} | Modelo: {equipment.model}
+                                  Serial: {equipment.serial_number} | Model: {equipment.model}
                                 </p>
                               </div>
                               {isSelected && (
@@ -359,8 +359,8 @@ export const NewEquipmentOutput: React.FC = () => {
                     <svg className="w-12 h-12 mx-auto mb-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
                     </svg>
-                    <p className="font-medium">Este empleado no tiene equipos asignados</p>
-                    <p className="text-sm mt-1">No se pueden crear salidas para este empleado</p>
+                    <p className="font-medium">This employee has no assigned equipment.</p>
+                    <p className="text-sm mt-1">You cannot create outputs for this employee.</p>
                   </div>
                 )}
 
@@ -368,7 +368,7 @@ export const NewEquipmentOutput: React.FC = () => {
                 {selectedEquipments.length > 0 && (
                   <div className="space-y-2">
                     <p className="text-sm font-medium text-gray-700">
-                      Equipos seleccionados ({selectedEquipments.length})
+                      Selected equipments ({selectedEquipments.length})
                     </p>
                     {selectedEquipments.map((equipment) => (
                       <div
@@ -396,7 +396,7 @@ export const NewEquipmentOutput: React.FC = () => {
               {/* Date Selection */}
               <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Fecha de Salida
+                  Departure Date
                 </label>
                 <input
                   type="date"
@@ -412,12 +412,12 @@ export const NewEquipmentOutput: React.FC = () => {
                   onClick={() => setStep(1)}
                   className="px-4 py-3 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition-colors"
                 >
-                  Anterior
+                  Previous
                 </button>
                 <button
                   onClick={() => {
                     if (selectedEquipments.length === 0) {
-                      setError('Por favor selecciona al menos un equipo');
+                      setError('Please select at least one equipment');
                       return;
                     }
                     setError(null);
@@ -425,7 +425,7 @@ export const NewEquipmentOutput: React.FC = () => {
                   }}
                   className="flex-1 px-4 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors"
                 >
-                  Siguiente: Agregar Descripciones
+                  Next: Add Descriptions
                 </button>
               </div>
             </motion.div>
@@ -441,9 +441,9 @@ export const NewEquipmentOutput: React.FC = () => {
               className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 space-y-6"
             >
               <div>
-                <h2 className="text-lg font-semibold text-gray-900 mb-2">Agregar Comentarios</h2>
+                <h2 className="text-lg font-semibold text-gray-900 mb-2">Add Comments</h2>
                 <p className="text-sm text-gray-600">
-                  Agrega comentarios sobre la salida de cada equipo (motivo, condiciones, etc.)
+                  Add comments about each equipments departure (reason, conditions, etc.).
                 </p>
               </div>
 
@@ -452,23 +452,23 @@ export const NewEquipmentOutput: React.FC = () => {
                   <div className="mb-3">
                     <p className="font-medium text-gray-900">{equipment.name}</p>
                     <p className="text-sm text-gray-600">
-                      Serial: {equipment.serial_number} | Modelo: {equipment.model}
+                      Serial: {equipment.serial_number} | Model: {equipment.model}
                     </p>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Comentarios de Salida *
+                      Departure Comments *
                     </label>
                     <textarea
                       value={equipment.output_comments}
                       onChange={(e) => handleCommentChange(equipment.equipment_inventory_id, e.target.value)}
-                      placeholder="Describe el motivo de la salida, condiciones del equipo, etc..."
+                      placeholder="Describe the reason for departure, equipment conditions, etc..."
                       rows={3}
                       maxLength={350}
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     />
                     <p className="text-xs text-gray-500 mt-1">
-                      {equipment.output_comments.length}/350 caracteres
+                      {equipment.output_comments.length}/350 characters
                     </p>
                   </div>
                 </div>
@@ -481,14 +481,14 @@ export const NewEquipmentOutput: React.FC = () => {
                   disabled={isSubmitting}
                   className="px-4 py-3 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition-colors disabled:opacity-50"
                 >
-                  Anterior
+                  Previous
                 </button>
                 <button
                   onClick={handleSubmit}
                   disabled={isSubmitting || selectedEquipments.some(e => !e.output_comments.trim())}
                   className="flex-1 px-4 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {isSubmitting ? 'Creando salidas...' : `Crear ${selectedEquipments.length} Salida${selectedEquipments.length > 1 ? 's' : ''}`}
+                  {isSubmitting ? 'Creating departures...' : `Create ${selectedEquipments.length} Departure${selectedEquipments.length > 1 ? 's' : ''}`}
                 </button>
               </div>
             </motion.div>
