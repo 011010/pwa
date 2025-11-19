@@ -90,8 +90,9 @@ export const Profile: React.FC = () => {
     );
   }
 
-  // Get display name: prefer full_name, fallback to name
-  const displayName = user.full_name || user.name;
+  // Get display name: use full_name if available, otherwise construct from name + lastnames
+  const displayName = user.full_name ||
+    (user.lastnames ? `${user.name} ${user.lastnames}` : user.name);
 
   return (
     <div className="min-h-screen bg-gray-50 pb-20 transition-colors">

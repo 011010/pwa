@@ -283,7 +283,9 @@ export const Dashboard: React.FC = () => {
           <div className="flex items-center justify-between mb-4">
             <div>
               <h1 className="text-2xl font-bold text-gray-900">Assets</h1>
-              <p className="text-sm text-gray-600">Welcome, {user?.full_name || user?.name}</p>
+              <p className="text-sm text-gray-600">
+                Welcome, {user?.full_name || (user?.lastnames ? `${user.name} ${user.lastnames}` : user?.name)}
+              </p>
             </div>
             <div className="flex items-center gap-2">
               <button

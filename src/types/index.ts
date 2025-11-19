@@ -6,6 +6,7 @@
 export interface User {
   id: number;
   name: string;
+  lastnames?: string; // Last names, if provided by API
   full_name?: string; // Full name (name + lastnames), if provided by API
   email: string;
   roles: string[];
