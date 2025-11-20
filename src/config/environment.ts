@@ -106,4 +106,8 @@ export const endpoints = {
     stats: '/equipment-outputs-stats',
     activeByEmployee: (employeeId: number) => `/employees/${employeeId}/active-equipment-outputs`,
   },
+  homeOffice: {
+    checkApproval: '/home-office/check-approval',
+    approvalByEmployee: (employeeId: number) => `/home-office/approval/${employeeId}`,
+  },
 } as const;

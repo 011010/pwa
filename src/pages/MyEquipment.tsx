@@ -9,17 +9,46 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
+import { usePermissions } from '../hooks/usePermissions';
 import { equipmentOutputService } from '../services/equipmentOutputService';
+import { homeOfficeApprovalService } from '../services/homeOfficeApprovalService';
 import { BottomNav } from '../components/BottomNav';
 import type { EquipmentOutput } from '../types';
+import type { HomeOfficeApproval } from '../services/homeOfficeApprovalService';
 
 export const MyEquipment: React.FC = () => {
   const { user } = useAuth();
+  const { isAdmin } = usePermissions();
   const navigate = useNavigate();
   const [outputs, setOutputs] = useState<EquipmentOutput[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<'all' | 'active' | 'returned'>('active');
+  const [approval, setApproval] = useState<HomeOfficeApproval | null>(null);
+  const [checkingApproval, setCheckingApproval] = useState(true);
+
+  // Check home office approval on mount (employees only)
+  useEffect(() => {
+    const checkApproval = async () => {
+      // Admins don't need approval check
+      if (isAdmin) {
+        setCheckingApproval(false);
+        return;
+      }
+
+      try {
+        const approvalData = await homeOfficeApprovalService.checkHomeOfficeApproval();
+        setApproval(approvalData);
+      } catch (err) {
+        console.error('Failed to check home office approval:', err);
+        setApproval({ has_approved_request: false });
+      } finally {
+        setCheckingApproval(false);
+      }
+    };
+
+    checkApproval();
+  }, [isAdmin]);
 
   useEffect(() => {
     fetchMyEquipment();
@@ -63,6 +92,76 @@ export const MyEquipment: React.FC = () => {
 
   const activeCount = outputs.filter(o => o.is_active).length;
   const returnedCount = outputs.filter(o => !o.is_active).length;
+
+  // Show loading while checking approval
+  if (checkingApproval) {
+    return (
+      <div className="min-h-screen bg-gray-50 pb-20">
+        <div className="bg-gradient-to-r from-purple-600 to-purple-400 text-white p-6">
+          <h1 className="text-2xl font-bold">Mis Equipos</h1>
+        </div>
+        <div className="flex justify-center items-center py-12">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600" />
+        </div>
+        <BottomNav />
+      </div>
+    );
+  }
+
+  // Employees need approved home office request to access this page
+  if (!isAdmin && (!approval || !approval.has_approved_request)) {
+    return (
+      <div className="min-h-screen bg-gray-50 pb-20">
+        <div className="bg-gradient-to-r from-purple-600 to-purple-400 text-white p-6">
+          <div className="max-w-screen-xl mx-auto">
+            <div className="flex items-center justify-between">
+              <h1 className="text-2xl font-bold">Mis Equipos</h1>
+              <button
+                onClick={() => navigate('/dashboard')}
+                className="p-2 hover:bg-white/10 rounded-lg transition-colors"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+        <div className="max-w-screen-xl mx-auto px-4 py-12">
+          <div className="bg-white rounded-lg shadow-sm p-8 text-center">
+            <svg
+              className="w-20 h-20 text-amber-500 mx-auto mb-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+              />
+            </svg>
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">
+              Home Office No Autorizado
+            </h2>
+            <p className="text-gray-600 mb-6">
+              No tienes una solicitud de home office aprobada actualmente.
+              <br />
+              Por favor, solicita autorización desde el sistema de productividad.
+            </p>
+            <button
+              onClick={() => navigate('/dashboard')}
+              className="px-6 py-3 bg-purple-600 text-white rounded-lg font-medium hover:bg-purple-700 transition-colors"
+            >
+              Volver al Dashboard
+            </button>
+          </div>
+        </div>
+        <BottomNav />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
