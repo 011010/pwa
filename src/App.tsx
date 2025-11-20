@@ -17,6 +17,8 @@ import EmployeeEquipment from './pages/EmployeeEquipment';
 import Profile from './pages/Profile';
 import EquipmentOutputs from './pages/EquipmentOutputs';
 import NewEquipmentOutput from './pages/NewEquipmentOutput';
+import MyEquipment from './pages/MyEquipment';
+import MyEquipmentDetail from './pages/MyEquipmentDetail';
 
 function App() {
   return (
@@ -88,6 +90,22 @@ function App() {
             element={
               <ProtectedRoute>
                 <NewEquipmentOutput />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/my-equipment"
+            element={
+              <ProtectedRoute>
+                <MyEquipment />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/my-equipment/:id"
+            element={
+              <ProtectedRoute>
+                <MyEquipmentDetail />
               </ProtectedRoute>
             }
           />

@@ -168,6 +168,24 @@ export const getActiveOutputsByEmployee = async (
 };
 
 /**
+ * Get equipment outputs for current user (by email)
+ */
+export const getMyEquipmentOutputs = async (
+  userEmail: string
+): Promise<EquipmentOutput[]> => {
+  try {
+    const response = await getEquipmentOutputs({
+      email: userEmail,
+      per_page: 100
+    });
+    return response.data;
+  } catch (error) {
+    console.error('[Equipment Output Service] Failed to fetch user outputs:', error);
+    throw error;
+  }
+};
+
+/**
  * Search equipment outputs
  */
 export const searchEquipmentOutputs = async (
@@ -193,6 +211,7 @@ export const equipmentOutputService = {
   getEquipmentOutputStats,
   getActiveOutputsByEmployee,
   searchEquipmentOutputs,
+  getMyEquipmentOutputs,
 };
 
 export default equipmentOutputService;
