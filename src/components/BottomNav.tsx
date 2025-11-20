@@ -5,9 +5,11 @@
  * Displays active state and icon for each route.
  */
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { usePermissions } from '../hooks/usePermissions';
+import { homeOfficeApprovalService } from '../services/homeOfficeApprovalService';
 
 interface NavItem {
   path: string;
@@ -76,11 +78,51 @@ const navItems: NavItem[] = [
 
 export const BottomNav: React.FC = () => {
   const location = useLocation();
+  const { isAdmin } = usePermissions();
+  const [hasHomeOfficeApproval, setHasHomeOfficeApproval] = useState(false);
+
+  // Check home office approval for employees
+  useEffect(() => {
+    if (isAdmin) {
+      // Admins don't need approval check
+      return;
+    }
+
+    const checkApproval = async () => {
+      try {
+        const approval = await homeOfficeApprovalService.checkHomeOfficeApproval();
+        setHasHomeOfficeApproval(approval.has_approved_request);
+      } catch (err) {
+        console.error('Failed to check home office approval:', err);
+        setHasHomeOfficeApproval(false);
+      }
+    };
+
+    checkApproval();
+  }, [isAdmin]);
+
+  // Filter navigation items based on role and approval
+  const visibleNavItems = navItems.filter(item => {
+    // My Equipment only visible if:
+    // - User is admin, OR
+    // - User is employee with approved home office request
+    if (item.path === '/my-equipment') {
+      return isAdmin || hasHomeOfficeApproval;
+    }
+
+    // Scanner only visible to admins
+    if (item.path === '/scanner') {
+      return isAdmin;
+    }
+
+    // Dashboard and Profile visible to everyone
+    return true;
+  });
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg z-50 safe-area-inset-bottom">
       <div className="flex items-center justify-around h-16 max-w-screen-xl mx-auto px-2">
-        {navItems.map((item) => {
+        {visibleNavItems.map((item) => {
           const isActive =
             location.pathname === item.path ||
             (item.path !== '/dashboard' && location.pathname.startsWith(item.path));

@@ -9,6 +9,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { usePermissions } from '../hooks/usePermissions';
 import { equipmentOutputService } from '../services/equipmentOutputService';
 import type { EquipmentOutput } from '../types';
 
@@ -23,6 +24,7 @@ interface EquipmentPhoto {
 export const MyEquipmentDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { isAdmin } = usePermissions();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [output, setOutput] = useState<EquipmentOutput | null>(null);
@@ -80,6 +82,11 @@ export const MyEquipmentDetail: React.FC = () => {
 
   const canUploadOutputPhoto = (): boolean => {
     if (!output) return false;
+
+    // Admins can upload photos anytime
+    if (isAdmin) return true;
+
+    // Employees can only upload on output_date
     const today = new Date().toISOString().split('T')[0];
     const outputDate = new Date(output.output_date).toISOString().split('T')[0];
     return today === outputDate;
@@ -87,6 +94,11 @@ export const MyEquipmentDetail: React.FC = () => {
 
   const canUploadInputPhoto = (): boolean => {
     if (!output || !output.input_date) return false;
+
+    // Admins can upload photos anytime
+    if (isAdmin) return true;
+
+    // Employees can only upload on input_date
     const today = new Date().toISOString().split('T')[0];
     const inputDate = new Date(output.input_date).toISOString().split('T')[0];
     return today === inputDate;
