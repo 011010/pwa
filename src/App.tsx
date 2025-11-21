@@ -17,8 +17,8 @@ import EmployeeEquipment from './pages/EmployeeEquipment';
 import Profile from './pages/Profile';
 import EquipmentOutputs from './pages/EquipmentOutputs';
 import NewEquipmentOutput from './pages/NewEquipmentOutput';
-import MyEquipment from './pages/MyEquipment';
-import MyEquipmentDetail from './pages/MyEquipmentDetail';
+import CreateHomeOffice from './pages/CreateHomeOffice';
+import HomeOfficeDetail from './pages/HomeOfficeDetail';
 
 function App() {
   return (
@@ -94,18 +94,18 @@ function App() {
             }
           />
           <Route
-            path="/my-equipment"
+            path="/create-home-office"
             element={
               <ProtectedRoute>
-                <MyEquipment />
+                <CreateHomeOffice />
               </ProtectedRoute>
             }
           />
           <Route
-            path="/my-equipment/:id"
+            path="/home-office/:id"
             element={
               <ProtectedRoute>
-                <MyEquipmentDetail />
+                <HomeOfficeDetail />
               </ProtectedRoute>
             }
           />

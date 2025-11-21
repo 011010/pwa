@@ -184,8 +184,11 @@ export interface EquipmentOutput {
   employee_name: string;
   output_date: string;
   output_comments: string;
+  output_photo: string | null; // Base64 encoded image
   input_date: string | null;
   input_comments: string | null;
+  input_photo: string | null; // Base64 encoded image
+  input_signature: string | null; // Base64 encoded signature
   is_active: boolean;
   equipment: EquipmentOutputEquipment;
   employee: EquipmentOutputEmployee;
@@ -200,11 +203,14 @@ export interface CreateEquipmentOutputData {
   employee_id: number;
   output_comments: string;
   output_date: string;
+  output_photo?: string; // Base64 encoded image (optional)
 }
 
 export interface UpdateEquipmentOutputData {
   input_comments: string;
   input_date: string;
+  input_photo?: string; // Base64 encoded image (optional)
+  input_signature?: string; // Base64 encoded signature (optional)
 }
 
 export interface EquipmentOutputStats {

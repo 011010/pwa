@@ -6,6 +6,7 @@ import { usePermissions } from '../hooks/usePermissions';
 import { equipmentService } from '../services/equipmentService';
 import { AssetCard } from '../components/AssetCard';
 import { BottomNav } from '../components/BottomNav';
+import { EmployeeDashboard } from './EmployeeDashboard';
 import type { EquipmentAssignment, Asset } from '../types';
 
 type StatusFilter = 'all' | 'in_use' | 'available' | 'retired';
@@ -15,6 +16,11 @@ export const Dashboard: React.FC = () => {
   const { isOnline, pendingCount, isSyncing } = useOfflineQueue();
   const { isAdmin } = usePermissions();
   const navigate = useNavigate();
+
+  // If user is not admin, show employee dashboard
+  if (!isAdmin) {
+    return <EmployeeDashboard />;
+  }
   const [assignments, setAssignments] = useState<EquipmentAssignment[]>([]);
   const [allCounts, setAllCounts] = useState({ all: 0, in_use: 0, available: 0, retired: 0 });
   const [isLoading, setIsLoading] = useState(true);
