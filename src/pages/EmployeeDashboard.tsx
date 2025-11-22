@@ -49,13 +49,15 @@ export const EmployeeDashboard: React.FC = () => {
         }),
         equipmentOutputService.getEquipmentOutputs({
           email: user.email,
-          is_active: true,
           per_page: 100
         })
       ]);
 
       setMyEquipment(equipmentResponse.data);
-      setHomeOfficeOutputs(outputsResponse.data);
+
+      // Filter only active outputs on client side
+      const activeOutputs = outputsResponse.data.filter(output => output.is_active);
+      setHomeOfficeOutputs(activeOutputs);
     } catch (err: any) {
       console.error('[Employee Dashboard] Failed to fetch data:', err);
       setError(err.message || 'Failed to load your equipment');
