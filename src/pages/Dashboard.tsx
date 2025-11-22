@@ -2,9 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useOfflineQueue } from '../hooks/useOfflineQueue';
+import { usePermissions } from '../hooks/usePermissions';
 import { equipmentService } from '../services/equipmentService';
 import { AssetCard } from '../components/AssetCard';
 import { BottomNav } from '../components/BottomNav';
+import { EmployeeDashboard } from './EmployeeDashboard';
 import type { EquipmentAssignment, Asset } from '../types';
 
 type StatusFilter = 'all' | 'in_use' | 'available' | 'retired';
@@ -12,7 +14,13 @@ type StatusFilter = 'all' | 'in_use' | 'available' | 'retired';
 export const Dashboard: React.FC = () => {
   const { user, logout } = useAuth();
   const { isOnline, pendingCount, isSyncing } = useOfflineQueue();
+  const { isAdmin } = usePermissions();
   const navigate = useNavigate();
+
+  // If user is not admin, show employee dashboard
+  if (!isAdmin) {
+    return <EmployeeDashboard />;
+  }
   const [assignments, setAssignments] = useState<EquipmentAssignment[]>([]);
   const [allCounts, setAllCounts] = useState({ all: 0, in_use: 0, available: 0, retired: 0 });
   const [isLoading, setIsLoading] = useState(true);
@@ -283,16 +291,32 @@ export const Dashboard: React.FC = () => {
           <div className="flex items-center justify-between mb-4">
             <div>
               <h1 className="text-2xl font-bold text-gray-900">Assets</h1>
-              <p className="text-sm text-gray-600">Welcome, {user?.name}</p>
+              <p className="text-sm text-gray-600">
+                Welcome, {user?.full_name || (user?.lastnames ? `${user.name} ${user.lastnames}` : user?.name)}
+              </p>
             </div>
-            <button
-              onClick={() => logout()}
-              className="p-2 text-gray-600 hover:text-gray-900 transition-colors"
-            >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-              </svg>
-            </button>
+            <div className="flex items-center gap-2">
+              {/* Home Office button - Admin only */}
+              {isAdmin && (
+                <button
+                  onClick={() => navigate('/equipment-outputs')}
+                  className="flex items-center gap-2 px-3 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                  </svg>
+                  Home Office
+                </button>
+              )}
+              <button
+                onClick={() => logout()}
+                className="p-2 text-gray-600 hover:text-gray-900 transition-colors"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                </svg>
+              </button>
+            </div>
           </div>
 
           {/* Status Bar */}

@@ -46,6 +46,7 @@ export interface EquipmentAssignmentsParams {
   per_page?: number;
   employee_id?: number;
   equipment_id?: number;
+  email?: string; // Filter by employee email
   date_from?: string; // Format: Y-m-d (e.g., 2025-01-01)
   date_to?: string;
   status?: 'ACTIV' | 'MANTC' | 'BAJAS' | 'LIBRE';

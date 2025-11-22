@@ -6,6 +6,8 @@
 export interface User {
   id: number;
   name: string;
+  lastnames?: string; // Last names, if provided by API
+  full_name?: string; // Full name (name + lastnames), if provided by API
   email: string;
   roles: string[];
   permissions: string[];
@@ -150,6 +152,71 @@ export interface EquipmentAssignment {
     created_at: string;
     updated_at: string;
   };
+}
+
+// Equipment Output Types (Home Office Management)
+export interface EquipmentOutputEquipment {
+  id: number;
+  serial_number: string;
+  name: string;
+  model: string;
+  brand: string;
+  type: string;
+  type_description: string;
+  status: string;
+  description?: string;
+}
+
+export interface EquipmentOutputEmployee {
+  id: number;
+  name: string;
+  lastnames: string;
+  full_name: string;
+  email: string;
+  department: string;
+  position: string;
+}
+
+export interface EquipmentOutput {
+  id: number;
+  equipment_inventory_id: number;
+  employee_id: number;
+  employee_name: string;
+  output_date: string;
+  output_comments: string;
+  output_photo: string | null; // Base64 encoded image
+  input_date: string | null;
+  input_comments: string | null;
+  input_photo: string | null; // Base64 encoded image
+  input_signature: string | null; // Base64 encoded signature
+  is_active: boolean;
+  equipment: EquipmentOutputEquipment;
+  employee: EquipmentOutputEmployee;
+  metadata: {
+    created_at: string;
+    updated_at: string;
+  };
+}
+
+export interface CreateEquipmentOutputData {
+  equipment_inventory_id: number;
+  employee_id: number;
+  output_comments: string;
+  output_date: string;
+  output_photo?: string; // Base64 encoded image (optional)
+}
+
+export interface UpdateEquipmentOutputData {
+  input_comments: string;
+  input_date: string;
+  input_photo?: string; // Base64 encoded image (optional)
+  input_signature?: string; // Base64 encoded signature (optional)
+}
+
+export interface EquipmentOutputStats {
+  total_outputs: number;
+  active_outputs: number;
+  returned_outputs: number;
 }
 
 // Component Props Types

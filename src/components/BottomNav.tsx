@@ -8,6 +8,7 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { usePermissions } from '../hooks/usePermissions';
 
 interface NavItem {
   path: string;
@@ -62,11 +63,23 @@ const navItems: NavItem[] = [
 
 export const BottomNav: React.FC = () => {
   const location = useLocation();
+  const { isAdmin } = usePermissions();
+
+  // Filter navigation items based on role
+  const visibleNavItems = navItems.filter(item => {
+    // Scanner only visible to admins
+    if (item.path === '/scanner') {
+      return isAdmin;
+    }
+
+    // Dashboard and Profile visible to everyone
+    return true;
+  });
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg z-50 safe-area-inset-bottom">
       <div className="flex items-center justify-around h-16 max-w-screen-xl mx-auto px-2">
-        {navItems.map((item) => {
+        {visibleNavItems.map((item) => {
           const isActive =
             location.pathname === item.path ||
             (item.path !== '/dashboard' && location.pathname.startsWith(item.path));

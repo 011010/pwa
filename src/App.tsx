@@ -15,6 +15,10 @@ import Scanner from './pages/Scanner';
 import AssetDetail from './pages/AssetDetail';
 import EmployeeEquipment from './pages/EmployeeEquipment';
 import Profile from './pages/Profile';
+import EquipmentOutputs from './pages/EquipmentOutputs';
+import NewEquipmentOutput from './pages/NewEquipmentOutput';
+import CreateHomeOffice from './pages/CreateHomeOffice';
+import HomeOfficeDetail from './pages/HomeOfficeDetail';
 
 function App() {
   return (
@@ -70,6 +74,38 @@ function App() {
             element={
               <ProtectedRoute>
                 <Profile />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/equipment-outputs"
+            element={
+              <ProtectedRoute>
+                <EquipmentOutputs />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/equipment-outputs/new"
+            element={
+              <ProtectedRoute>
+                <NewEquipmentOutput />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/create-home-office"
+            element={
+              <ProtectedRoute>
+                <CreateHomeOffice />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/home-office/:id"
+            element={
+              <ProtectedRoute>
+                <HomeOfficeDetail />
               </ProtectedRoute>
             }
           />
