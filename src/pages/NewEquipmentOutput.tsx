@@ -37,7 +37,6 @@ export const NewEquipmentOutput: React.FC = () => {
   const [selectedEmployee, setSelectedEmployee] = useState<SelectedEmployee | null>(null);
 
   // Equipment selection
-  const [equipmentSearch, setEquipmentSearch] = useState('');
   const [equipmentList, setEquipmentList] = useState<EquipmentAssignment[]>([]);
   const [isLoadingEquipment, setIsLoadingEquipment] = useState(false);
   const [selectedEquipments, setSelectedEquipments] = useState<SelectedEquipment[]>([]);
@@ -118,7 +117,6 @@ export const NewEquipmentOutput: React.FC = () => {
         output_comments: '',
       }
     ]);
-    setEquipmentSearch('');
     setEquipmentList([]);
   };
 
@@ -447,7 +445,7 @@ export const NewEquipmentOutput: React.FC = () => {
                 </p>
               </div>
 
-              {selectedEquipments.map((equipment, index) => (
+              {selectedEquipments.map((equipment) => (
                 <div key={equipment.equipment_inventory_id} className="border border-gray-200 rounded-lg p-4">
                   <div className="mb-3">
                     <p className="font-medium text-gray-900">{equipment.name}</p>

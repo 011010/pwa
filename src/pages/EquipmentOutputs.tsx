@@ -39,10 +39,7 @@ export const EquipmentOutputs: React.FC = () => {
         per_page: 100,
       };
 
-      const [outputsResponse, statsData] = await Promise.all([
-        equipmentOutputService.getEquipmentOutputs(params),
-        equipmentOutputService.getEquipmentOutputStats(),
-      ]);
+      const outputsResponse = await equipmentOutputService.getEquipmentOutputs(params);
 
       // Filter on client side based on filter selection
       let filteredOutputs = outputsResponse.data;
@@ -53,7 +50,14 @@ export const EquipmentOutputs: React.FC = () => {
       }
 
       setOutputs(filteredOutputs);
-      setStats(statsData);
+
+      // Calculate stats from data (backend doesn't have /stats endpoint yet)
+      const calculatedStats: EquipmentOutputStats = {
+        total_outputs: outputsResponse.data.length,
+        active_outputs: outputsResponse.data.filter(o => o.is_active).length,
+        returned_outputs: outputsResponse.data.filter(o => !o.is_active).length,
+      };
+      setStats(calculatedStats);
     } catch (err: any) {
       console.error('Failed to fetch equipment outputs:', err);
       setError(err.message || 'Failed to load equipment outputs');
