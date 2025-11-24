@@ -258,7 +258,8 @@ export const EquipmentOutputs: React.FC = () => {
                 key={output.id}
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 hover:shadow-md transition-shadow"
+                onClick={() => navigate(`/equipment-outputs/${output.id}`)}
+                className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 hover:shadow-md transition-shadow cursor-pointer"
               >
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
@@ -305,11 +306,44 @@ export const EquipmentOutputs: React.FC = () => {
                         </p>
                       )}
                     </div>
+
+                    {/* Photo indicators */}
+                    <div className="mt-3 flex items-center gap-3 text-xs">
+                      {output.output_photo && (
+                        <span className="flex items-center gap-1 text-green-600">
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                          </svg>
+                          Foto salida
+                        </span>
+                      )}
+                      {output.input_photo && (
+                        <span className="flex items-center gap-1 text-blue-600">
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                          </svg>
+                          Foto entrada
+                        </span>
+                      )}
+                      {output.input_signature && (
+                        <span className="flex items-center gap-1 text-purple-600">
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                          </svg>
+                          Firma
+                        </span>
+                      )}
+                    </div>
                   </div>
 
                   {output.is_active && (
                     <button
-                      onClick={() => handleReturnClick(output)}
+                      onClick={(e) => {
+                        e.stopPropagation(); // Prevent card click
+                        handleReturnClick(output);
+                      }}
                       className="ml-4 bg-red-600 text-white px-3 py-2 rounded-lg text-sm font-medium hover:bg-red-700 transition-colors"
                     >
                       Mark as Returned
