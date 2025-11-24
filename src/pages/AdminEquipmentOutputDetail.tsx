@@ -12,6 +12,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { equipmentOutputService } from '../services/equipmentOutputService';
+import { ImagePreview } from '../components/ImagePreview';
 import type { EquipmentOutput } from '../types';
 
 export const AdminEquipmentOutputDetail: React.FC = () => {
@@ -38,6 +39,9 @@ export const AdminEquipmentOutputDetail: React.FC = () => {
   // Return form
   const [showReturnForm, setShowReturnForm] = useState(false);
 
+  // Image preview
+  const [previewImage, setPreviewImage] = useState<{ src: string; alt: string } | null>(null);
+
   useEffect(() => {
     if (id) {
       fetchDetail();
@@ -50,6 +54,17 @@ export const AdminEquipmentOutputDetail: React.FC = () => {
     try {
       setIsLoading(true);
       const data = await equipmentOutputService.getEquipmentOutputById(parseInt(id));
+
+      console.log('[AdminEquipmentOutputDetail] Equipment output loaded:', {
+        id: data.id,
+        hasOutputPhoto: !!data.output_photo,
+        outputPhotoLength: data.output_photo?.length || 0,
+        hasInputPhoto: !!data.input_photo,
+        inputPhotoLength: data.input_photo?.length || 0,
+        hasSignature: !!data.input_signature,
+        signatureLength: data.input_signature?.length || 0
+      });
+
       setOutput(data);
 
       // Initialize editable fields
@@ -60,7 +75,7 @@ export const AdminEquipmentOutputDetail: React.FC = () => {
       setInputPhoto(data.input_photo);
       setInputSignature(data.input_signature);
     } catch (err: any) {
-      console.error('Failed to fetch equipment output:', err);
+      console.error('[AdminEquipmentOutputDetail] Failed to fetch equipment output:', err);
       setError(err.message || 'Failed to load equipment output');
     } finally {
       setIsLoading(false);
@@ -306,8 +321,10 @@ export const AdminEquipmentOutputDetail: React.FC = () => {
                   <img
                     src={outputPhoto || output.output_photo || ''}
                     alt="Output photo"
-                    className="w-full max-w-md h-48 object-cover rounded-lg border-2 border-gray-200 mb-2"
+                    onClick={() => setPreviewImage({ src: outputPhoto || output.output_photo || '', alt: 'Foto de salida' })}
+                    className="w-full max-w-md h-48 object-cover rounded-lg border-2 border-gray-200 mb-2 cursor-pointer hover:opacity-90 transition-opacity"
                   />
+                  <p className="text-xs text-gray-500 mb-2">Click en la imagen para ampliar</p>
                   {isEditing && (
                     <div className="flex gap-2">
                       <button
@@ -383,8 +400,10 @@ export const AdminEquipmentOutputDetail: React.FC = () => {
                       <img
                         src={inputPhoto || output.input_photo || ''}
                         alt="Input photo"
-                        className="w-full max-w-md h-48 object-cover rounded-lg border-2 border-gray-200 mb-2"
+                        onClick={() => setPreviewImage({ src: inputPhoto || output.input_photo || '', alt: 'Foto de devolución' })}
+                        className="w-full max-w-md h-48 object-cover rounded-lg border-2 border-gray-200 mb-2 cursor-pointer hover:opacity-90 transition-opacity"
                       />
+                      <p className="text-xs text-gray-500 mb-2">Click en la imagen para ampliar</p>
                       {isEditing && (
                         <div className="flex gap-2">
                           <button
@@ -427,8 +446,10 @@ export const AdminEquipmentOutputDetail: React.FC = () => {
                       <img
                         src={inputSignature || output.input_signature || ''}
                         alt="Signature"
-                        className="w-full max-w-md h-32 object-contain bg-gray-50 rounded-lg border-2 border-gray-200 p-2 mb-2"
+                        onClick={() => setPreviewImage({ src: inputSignature || output.input_signature || '', alt: 'Firma digital' })}
+                        className="w-full max-w-md h-32 object-contain bg-gray-50 rounded-lg border-2 border-gray-200 p-2 mb-2 cursor-pointer hover:opacity-90 transition-opacity"
                       />
+                      <p className="text-xs text-gray-500 mb-2">Click en la imagen para ampliar</p>
                       {isEditing && (
                         <div className="flex gap-2">
                           <button
@@ -627,6 +648,14 @@ export const AdminEquipmentOutputDetail: React.FC = () => {
           </div>
         )}
       </div>
+
+      {/* Image Preview Modal */}
+      <ImagePreview
+        src={previewImage?.src || null}
+        alt={previewImage?.alt || ''}
+        isOpen={!!previewImage}
+        onClose={() => setPreviewImage(null)}
+      />
     </div>
   );
 };

@@ -88,18 +88,29 @@ export const CreateHomeOffice: React.FC = () => {
       const selectedEquipment = myEquipment.find(eq => eq.id === selectedEquipmentId);
       if (!selectedEquipment) throw new Error('Equipment not found');
 
-      await equipmentOutputService.createEquipmentOutput({
+      const payload = {
         equipment_inventory_id: selectedEquipmentId,
         employee_id: user.id,
         output_date: outputDate,
         output_comments: comments,
         output_photo: photo || undefined
+      };
+
+      console.log('[CreateHomeOffice] Creating equipment output:', {
+        equipment_inventory_id: payload.equipment_inventory_id,
+        employee_id: payload.employee_id,
+        output_date: payload.output_date,
+        hasPhoto: !!photo,
+        photoLength: photo?.length || 0,
+        photoPreview: photo ? photo.substring(0, 50) + '...' : 'no photo'
       });
+
+      await equipmentOutputService.createEquipmentOutput(payload);
 
       alert('¡Solicitud de home office creada exitosamente!');
       navigate('/dashboard');
     } catch (err: any) {
-      console.error('Failed to create home office:', err);
+      console.error('[CreateHomeOffice] Failed to create home office:', err);
       setError(err.message || 'Error al crear la solicitud');
     } finally {
       setIsLoading(false);
