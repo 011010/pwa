@@ -89,7 +89,7 @@ export const CreateHomeOffice: React.FC = () => {
       if (!selectedEquipment) throw new Error('Equipment not found');
 
       const payload = {
-        equipment_inventory_id: selectedEquipmentId,
+        equipment_inventory_id: selectedEquipment.metadata.equipment_id,
         employee_id: user.id,
         output_date: outputDate,
         output_comments: comments,
