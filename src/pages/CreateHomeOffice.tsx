@@ -88,9 +88,9 @@ export const CreateHomeOffice: React.FC = () => {
       const selectedEquipment = myEquipment.find(eq => eq.id === selectedEquipmentId);
       if (!selectedEquipment) throw new Error('Equipment not found');
 
-      await equipmentOutputService.createEquipmentOutput({
+      const payload = {
         equipment_inventory_id: selectedEquipment.metadata.equipment_id,
-        employee_id: user.id,
+        employee_email: user.email,
         output_date: outputDate,
         output_comments: comments,
         output_photo: photo || undefined
@@ -98,7 +98,7 @@ export const CreateHomeOffice: React.FC = () => {
 
       console.log('[CreateHomeOffice] Creating equipment output:', {
         equipment_inventory_id: payload.equipment_inventory_id,
-        employee_id: payload.employee_id,
+        employee_email: payload.employee_email,
         output_date: payload.output_date,
         hasPhoto: !!photo,
         photoLength: photo?.length || 0,

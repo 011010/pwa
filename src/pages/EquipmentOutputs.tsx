@@ -18,7 +18,7 @@ export const EquipmentOutputs: React.FC = () => {
   const [stats, setStats] = useState<EquipmentOutputStats | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [filter, setFilter] = useState<'all' | 'active' | 'returned'>('active');
+  const [filter, setFilter] = useState<'all' | 'active' | 'returned'>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [showReturnModal, setShowReturnModal] = useState(false);
   const [selectedOutput, setSelectedOutput] = useState<EquipmentOutput | null>(null);
