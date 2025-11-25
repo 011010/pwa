@@ -210,7 +210,7 @@ export interface CreateEquipmentOutputData {
 export interface UpdateEquipmentOutputData {
   input_comments: string;
   input_date: string;
-  input_photo?: string; // Base64 encoded image (optional)
+  input_photo: string; // Base64 encoded image (required)
   input_signature?: string; // Base64 encoded signature (optional)
 }
 
