@@ -111,7 +111,24 @@ export const CreateHomeOffice: React.FC = () => {
       navigate('/dashboard');
     } catch (err: any) {
       console.error('[CreateHomeOffice] Failed to create home office:', err);
-      setError(err.message || 'Error al crear la solicitud');
+
+      // Log detailed validation errors
+      if (err.errors) {
+        console.error('[CreateHomeOffice] Validation errors detail:', JSON.stringify(err.errors, null, 2));
+      }
+
+      // Show user-friendly error message
+      let errorMessage = err.message || 'Error al crear la solicitud';
+      if (err.errors) {
+        // Try to extract first validation error
+        const firstError = Object.values(err.errors)[0];
+        if (Array.isArray(firstError) && firstError.length > 0) {
+          errorMessage = firstError[0];
+        }
+      }
+
+      setError(errorMessage);
+      alert(errorMessage);
     } finally {
       setIsLoading(false);
     }

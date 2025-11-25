@@ -92,6 +92,12 @@ const createApiClient = (): AxiosInstance => {
       };
 
       console.error('[API Error]', apiError);
+
+      // Log validation errors in detail for debugging
+      if (error.response.status === 422 && apiError.errors) {
+        console.error('[API Validation Errors - Detail]', JSON.stringify(apiError.errors, null, 2));
+      }
+
       return Promise.reject(apiError);
     }
   );
