@@ -92,7 +92,7 @@ export const HomeOfficeDetail: React.FC = () => {
       await equipmentOutputService.updateEquipmentOutput(parseInt(id), {
         input_date: inputDate,
         input_comments: inputComments,
-        input_photo: inputPhoto || undefined,
+        input_photo: inputPhoto || '',
         input_signature: inputSignature || undefined
       });
 

@@ -161,8 +161,10 @@ export const NewEquipmentOutput: React.FC = () => {
         equipmentOutputService.createEquipmentOutput({
           equipment_inventory_id: equipment.equipment_inventory_id,
           employee_id: selectedEmployee.id,
+          employee_email: selectedEmployee.email, // Added employee_email
           output_comments: equipment.output_comments,
           output_date: outputDate,
+          output_photo: '', // Added output_photo as an empty string
         })
       );
 
