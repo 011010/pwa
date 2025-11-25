@@ -81,6 +81,11 @@ export const CreateHomeOffice: React.FC = () => {
       return;
     }
 
+    if (!photo) {
+      alert('Por favor toma una foto del equipo');
+      return;
+    }
+
     try {
       setIsLoading(true);
       setError(null);
@@ -88,18 +93,31 @@ export const CreateHomeOffice: React.FC = () => {
       const selectedEquipment = myEquipment.find(eq => eq.id === selectedEquipmentId);
       if (!selectedEquipment) throw new Error('Equipment not found');
 
-      await equipmentOutputService.createEquipmentOutput({
-        equipment_inventory_id: selectedEquipmentId,
+      const payload = {
+        equipment_inventory_id: selectedEquipment.metadata.equipment_id,
         employee_id: user.id,
+        employee_email: user.email,
         output_date: outputDate,
         output_comments: comments,
-        output_photo: photo || undefined
+        output_photo: photo
+      };
+
+      console.log('[CreateHomeOffice] Creating equipment output:', {
+        equipment_inventory_id: payload.equipment_inventory_id,
+        employee_id: payload.employee_id,
+        employee_email: payload.employee_email,
+        output_date: payload.output_date,
+        hasPhoto: !!photo,
+        photoLength: photo?.length || 0,
+        photoPreview: photo ? photo.substring(0, 50) + '...' : 'no photo'
       });
+
+      await equipmentOutputService.createEquipmentOutput(payload);
 
       alert('¡Solicitud de home office creada exitosamente!');
       navigate('/dashboard');
     } catch (err: any) {
-      console.error('Failed to create home office:', err);
+      console.error('[CreateHomeOffice] Failed to create home office:', err);
       setError(err.message || 'Error al crear la solicitud');
     } finally {
       setIsLoading(false);
@@ -299,10 +317,10 @@ export const CreateHomeOffice: React.FC = () => {
               className="bg-white rounded-lg shadow-sm p-6"
             >
               <h2 className="text-xl font-bold text-gray-900 mb-2">
-                Foto del equipo
+                Foto del equipo *
               </h2>
               <p className="text-gray-600 mb-6">
-                Toma una foto del estado actual del equipo (opcional)
+                Toma una foto del estado actual del equipo
               </p>
 
               {photo ? (
@@ -341,7 +359,7 @@ export const CreateHomeOffice: React.FC = () => {
                 </button>
                 <button
                   onClick={handleSubmit}
-                  disabled={isLoading}
+                  disabled={isLoading || !photo}
                   className="flex-1 px-6 py-3 bg-purple-600 text-white rounded-lg font-medium hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
                   {isLoading ? 'Creando...' : 'Crear Solicitud'}

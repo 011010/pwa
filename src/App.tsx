@@ -19,6 +19,7 @@ import EquipmentOutputs from './pages/EquipmentOutputs';
 import NewEquipmentOutput from './pages/NewEquipmentOutput';
 import CreateHomeOffice from './pages/CreateHomeOffice';
 import HomeOfficeDetail from './pages/HomeOfficeDetail';
+import AdminEquipmentOutputDetail from './pages/AdminEquipmentOutputDetail';
 
 function App() {
   return (
@@ -90,6 +91,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <NewEquipmentOutput />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/equipment-outputs/:id"
+            element={
+              <ProtectedRoute>
+                <AdminEquipmentOutputDetail />
               </ProtectedRoute>
             }
           />

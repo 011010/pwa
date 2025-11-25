@@ -201,15 +201,16 @@ export interface EquipmentOutput {
 export interface CreateEquipmentOutputData {
   equipment_inventory_id: number;
   employee_id: number;
+  employee_email: string;
   output_comments: string;
   output_date: string;
-  output_photo?: string; // Base64 encoded image (optional)
+  output_photo: string; // Base64 encoded image (required)
 }
 
 export interface UpdateEquipmentOutputData {
   input_comments: string;
   input_date: string;
-  input_photo?: string; // Base64 encoded image (optional)
+  input_photo: string; // Base64 encoded image (required)
   input_signature?: string; // Base64 encoded signature (optional)
 }
 

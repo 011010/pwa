@@ -5,7 +5,7 @@
  * Shows active and returned equipment, allows creating outputs and marking returns.
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { equipmentOutputService } from '../services/equipmentOutputService';
@@ -14,15 +14,17 @@ import type { EquipmentOutput, EquipmentOutputStats } from '../types';
 
 export const EquipmentOutputs: React.FC = () => {
   const navigate = useNavigate();
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [outputs, setOutputs] = useState<EquipmentOutput[]>([]);
   const [stats, setStats] = useState<EquipmentOutputStats | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [filter, setFilter] = useState<'all' | 'active' | 'returned'>('active');
+  const [filter, setFilter] = useState<'all' | 'active' | 'returned'>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [showReturnModal, setShowReturnModal] = useState(false);
   const [selectedOutput, setSelectedOutput] = useState<EquipmentOutput | null>(null);
   const [returnComments, setReturnComments] = useState('');
+  const [returnPhoto, setReturnPhoto] = useState<string | null>(null);
   const [isReturning, setIsReturning] = useState(false);
 
   useEffect(() => {
@@ -98,11 +100,38 @@ export const EquipmentOutputs: React.FC = () => {
   const handleReturnClick = (output: EquipmentOutput) => {
     setSelectedOutput(output);
     setReturnComments('');
+    setReturnPhoto(null);
     setShowReturnModal(true);
+  };
+
+  const handlePhotoCapture = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    try {
+      const reader = new FileReader();
+      reader.onload = () => {
+        setReturnPhoto(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    } catch (err) {
+      console.error('Failed to read photo:', err);
+      alert('Error al cargar la foto');
+    }
   };
 
   const handleReturnSubmit = async () => {
     if (!selectedOutput || !returnComments.trim()) {
+      alert('Por favor agrega comentarios');
+      return;
+    }
+
+    if (!returnPhoto) {
+      alert('Por favor toma una foto del equipo');
       return;
     }
 
@@ -111,11 +140,13 @@ export const EquipmentOutputs: React.FC = () => {
       await equipmentOutputService.updateEquipmentOutput(selectedOutput.id, {
         input_comments: returnComments,
         input_date: new Date().toISOString(),
+        input_photo: returnPhoto,
       });
 
       setShowReturnModal(false);
       setSelectedOutput(null);
       setReturnComments('');
+      setReturnPhoto(null);
       fetchData();
     } catch (err: any) {
       console.error('Failed to mark as returned:', err);
@@ -140,6 +171,16 @@ export const EquipmentOutputs: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 pb-20 transition-colors">
+      {/* Hidden file input */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        capture="environment"
+        onChange={handleFileChange}
+        className="hidden"
+      />
+
       {/* Header */}
       <div className="bg-gradient-to-r from-blue-600 to-blue-400 text-white sticky top-0 z-40 shadow-lg">
         <div className="max-w-screen-xl mx-auto px-4 py-6">
@@ -258,7 +299,8 @@ export const EquipmentOutputs: React.FC = () => {
                 key={output.id}
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 hover:shadow-md transition-shadow"
+                onClick={() => navigate(`/equipment-outputs/${output.id}`)}
+                className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 hover:shadow-md transition-shadow cursor-pointer"
               >
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
@@ -305,11 +347,44 @@ export const EquipmentOutputs: React.FC = () => {
                         </p>
                       )}
                     </div>
+
+                    {/* Photo indicators */}
+                    <div className="mt-3 flex items-center gap-3 text-xs">
+                      {output.output_photo && (
+                        <span className="flex items-center gap-1 text-green-600">
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                          </svg>
+                          Foto salida
+                        </span>
+                      )}
+                      {output.input_photo && (
+                        <span className="flex items-center gap-1 text-blue-600">
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                          </svg>
+                          Foto entrada
+                        </span>
+                      )}
+                      {output.input_signature && (
+                        <span className="flex items-center gap-1 text-purple-600">
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                          </svg>
+                          Firma
+                        </span>
+                      )}
+                    </div>
                   </div>
 
                   {output.is_active && (
                     <button
-                      onClick={() => handleReturnClick(output)}
+                      onClick={(e) => {
+                        e.stopPropagation(); // Prevent card click
+                        handleReturnClick(output);
+                      }}
                       className="ml-4 bg-red-600 text-white px-3 py-2 rounded-lg text-sm font-medium hover:bg-red-700 transition-colors"
                     >
                       Mark as Returned
@@ -367,6 +442,38 @@ export const EquipmentOutputs: React.FC = () => {
               <p className="text-xs text-gray-500 mt-1">{returnComments.length}/350 characters</p>
             </div>
 
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Equipment Photo *
+              </label>
+              {returnPhoto ? (
+                <div>
+                  <img
+                    src={returnPhoto}
+                    alt="Return photo"
+                    className="w-full h-48 object-cover rounded-lg border-2 border-gray-200 mb-2"
+                  />
+                  <button
+                    onClick={() => setReturnPhoto(null)}
+                    className="text-sm text-red-600 hover:text-red-700 font-medium"
+                  >
+                    Remove photo
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={handlePhotoCapture}
+                  className="w-full py-8 border-2 border-dashed border-gray-300 rounded-lg hover:border-blue-400 transition-colors group"
+                >
+                  <svg className="w-10 h-10 text-gray-400 group-hover:text-blue-500 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                  <p className="text-sm text-gray-600">Click to take photo</p>
+                </button>
+              )}
+            </div>
+
             <div className="flex gap-3">
               <button
                 onClick={() => setShowReturnModal(false)}
@@ -377,7 +484,7 @@ export const EquipmentOutputs: React.FC = () => {
               </button>
               <button
                 onClick={handleReturnSubmit}
-                disabled={isReturning || !returnComments.trim()}
+                disabled={isReturning || !returnComments.trim() || !returnPhoto}
                 className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg font-medium hover:bg-red-700 transition-colors disabled:opacity-50"
               >
                 {isReturning ? 'Processing...' : 'Confirm Return'}
