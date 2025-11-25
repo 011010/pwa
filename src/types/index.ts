@@ -200,6 +200,7 @@ export interface EquipmentOutput {
 
 export interface CreateEquipmentOutputData {
   equipment_inventory_id: number;
+  employee_id: number;
   employee_email: string;
   output_comments: string;
   output_date: string;

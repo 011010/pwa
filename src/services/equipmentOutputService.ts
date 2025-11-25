@@ -82,9 +82,16 @@ export const createEquipmentOutput = async (
   data: CreateEquipmentOutputData
 ): Promise<EquipmentOutput> => {
   try {
+    // Transform employee_email to email for backend compatibility
+    const { employee_email, ...rest } = data;
+    const payload = {
+      ...rest,
+      email: employee_email
+    };
+
     const response = await api.post<ApiResponse<EquipmentOutput>>(
       endpoints.equipmentOutputs.create,
-      data
+      payload
     );
 
     if (!response.success) {

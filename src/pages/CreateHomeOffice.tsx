@@ -90,6 +90,7 @@ export const CreateHomeOffice: React.FC = () => {
 
       const payload = {
         equipment_inventory_id: selectedEquipment.metadata.equipment_id,
+        employee_id: user.id,
         employee_email: user.email,
         output_date: outputDate,
         output_comments: comments,
@@ -98,6 +99,7 @@ export const CreateHomeOffice: React.FC = () => {
 
       console.log('[CreateHomeOffice] Creating equipment output:', {
         equipment_inventory_id: payload.equipment_inventory_id,
+        employee_id: payload.employee_id,
         employee_email: payload.employee_email,
         output_date: payload.output_date,
         hasPhoto: !!photo,
