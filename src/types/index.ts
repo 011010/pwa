@@ -204,7 +204,7 @@ export interface CreateEquipmentOutputData {
   employee_email: string;
   output_comments: string;
   output_date: string;
-  output_photo?: string; // Base64 encoded image (optional)
+  output_photo: string; // Base64 encoded image (required)
 }
 
 export interface UpdateEquipmentOutputData {

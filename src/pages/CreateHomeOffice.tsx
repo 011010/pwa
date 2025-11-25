@@ -81,6 +81,11 @@ export const CreateHomeOffice: React.FC = () => {
       return;
     }
 
+    if (!photo) {
+      alert('Por favor toma una foto del equipo');
+      return;
+    }
+
     try {
       setIsLoading(true);
       setError(null);
@@ -94,7 +99,7 @@ export const CreateHomeOffice: React.FC = () => {
         employee_email: user.email,
         output_date: outputDate,
         output_comments: comments,
-        output_photo: photo || undefined
+        output_photo: photo
       };
 
       console.log('[CreateHomeOffice] Creating equipment output:', {
@@ -312,10 +317,10 @@ export const CreateHomeOffice: React.FC = () => {
               className="bg-white rounded-lg shadow-sm p-6"
             >
               <h2 className="text-xl font-bold text-gray-900 mb-2">
-                Foto del equipo
+                Foto del equipo *
               </h2>
               <p className="text-gray-600 mb-6">
-                Toma una foto del estado actual del equipo (opcional)
+                Toma una foto del estado actual del equipo
               </p>
 
               {photo ? (
@@ -354,7 +359,7 @@ export const CreateHomeOffice: React.FC = () => {
                 </button>
                 <button
                   onClick={handleSubmit}
-                  disabled={isLoading}
+                  disabled={isLoading || !photo}
                   className="flex-1 px-6 py-3 bg-purple-600 text-white rounded-lg font-medium hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
                   {isLoading ? 'Creando...' : 'Crear Solicitud'}
