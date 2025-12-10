@@ -141,6 +141,7 @@ export const EquipmentOutputs: React.FC = () => {
         input_comments: returnComments,
         input_date: new Date().toISOString(),
         input_photo: returnPhoto,
+        input_signature: '',
       });
 
       setShowReturnModal(false);

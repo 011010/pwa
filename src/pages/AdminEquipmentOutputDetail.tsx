@@ -133,7 +133,7 @@ export const AdminEquipmentOutputDetail: React.FC = () => {
         input_date: inputDate || new Date().toISOString().split('T')[0],
         input_comments: inputComments,
         input_photo: inputPhoto || '',
-        input_signature: inputSignature || undefined
+        input_signature: inputSignature || ''
       });
 
       alert('¡Equipo marcado como devuelto exitosamente!');
