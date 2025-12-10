@@ -185,6 +185,7 @@ export interface EquipmentOutput {
   output_date: string;
   output_comments: string;
   output_photo: string | null; // Base64 encoded image
+  output_signature: string | null; // Base64 encoded signature (NEW)
   input_date: string | null;
   input_comments: string | null;
   input_photo: string | null; // Base64 encoded image
@@ -205,13 +206,33 @@ export interface CreateEquipmentOutputData {
   output_comments: string;
   output_date: string;
   output_photo: string; // Base64 encoded image (required)
+  output_signature: string; // Base64 encoded signature (required)
 }
 
 export interface UpdateEquipmentOutputData {
   input_comments: string;
   input_date: string;
   input_photo: string; // Base64 encoded image (required)
-  input_signature?: string; // Base64 encoded signature (optional)
+  input_signature: string; // Base64 encoded signature (required)
+}
+
+export interface UnifiedEquipmentOutputPhoto {
+  id: string;
+  serverId?: number;
+  url: string;
+  uploadedAt: string;
+  isLocal: boolean;
+  type: 'output' | 'input'; // Which phase: output or return
+}
+
+export interface UnifiedEquipmentOutputSignature {
+  id: string;
+  serverId?: number;
+  url: string;
+  signedBy: string;
+  signedAt: string;
+  action: 'equipment_output' | 'equipment_return';
+  isLocal: boolean;
 }
 
 export interface EquipmentOutputStats {

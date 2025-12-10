@@ -8,23 +8,29 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { equipmentOutputService } from '../services/equipmentOutputService';
-import type { EquipmentOutput } from '../types';
+import { storageService } from '../services/storageService';
+import { SignaturePad } from '../components/SignaturePad';
+import type { EquipmentOutput, UnifiedEquipmentOutputPhoto, UnifiedEquipmentOutputSignature } from '../types';
 
 export const HomeOfficeDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const photoInputRef = useRef<HTMLInputElement>(null);
-  const signatureInputRef = useRef<HTMLInputElement>(null);
 
   const [output, setOutput] = useState<EquipmentOutput | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Photos and signatures (unified from server + local)
+  const [photos, setPhotos] = useState<UnifiedEquipmentOutputPhoto[]>([]);
+  const [signatures, setSignatures] = useState<UnifiedEquipmentOutputSignature[]>([]);
+
   // Return form
   const [showReturnForm, setShowReturnForm] = useState(false);
+  const [showSignaturePad, setShowSignaturePad] = useState(false);
   const [inputDate, setInputDate] = useState(new Date().toISOString().split('T')[0]);
   const [inputComments, setInputComments] = useState('');
-  const [inputPhoto, setInputPhoto] = useState<string | null>(null);
+  const [inputPhotos, setInputPhotos] = useState<string[]>([]);
   const [inputSignature, setInputSignature] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -41,6 +47,8 @@ export const HomeOfficeDetail: React.FC = () => {
       setIsLoading(true);
       const data = await equipmentOutputService.getEquipmentOutputById(parseInt(id));
       setOutput(data);
+      // Load photos and signatures after fetching output
+      await loadPhotosAndSignatures(parseInt(id), data);
     } catch (err: any) {
       console.error('Failed to fetch equipment output:', err);
       setError(err.message || 'Failed to load equipment output');
@@ -49,12 +57,92 @@ export const HomeOfficeDetail: React.FC = () => {
     }
   };
 
-  const handlePhotoCapture = () => {
-    photoInputRef.current?.click();
+  const loadPhotosAndSignatures = async (outputId: number, outputData: EquipmentOutput) => {
+    try {
+      const unifiedPhotos: UnifiedEquipmentOutputPhoto[] = [];
+      const unifiedSignatures: UnifiedEquipmentOutputSignature[] = [];
+
+      // Load output (salida) photo from server
+      if (outputData.output_photo) {
+        unifiedPhotos.push({
+          id: 'server_output_photo',
+          url: outputData.output_photo,
+          uploadedAt: outputData.output_date,
+          isLocal: false,
+          type: 'output'
+        });
+      }
+
+      // Load output signature from server
+      if (outputData.output_signature) {
+        unifiedSignatures.push({
+          id: 'server_output_signature',
+          url: outputData.output_signature,
+          signedBy: outputData.employee_name,
+          signedAt: outputData.output_date,
+          action: 'equipment_output',
+          isLocal: false
+        });
+      }
+
+      // Load input (devolución) photo from server
+      if (outputData.input_photo) {
+        unifiedPhotos.push({
+          id: 'server_input_photo',
+          url: outputData.input_photo,
+          uploadedAt: outputData.input_date || new Date().toISOString(),
+          isLocal: false,
+          type: 'input'
+        });
+      }
+
+      // Load input signature from server
+      if (outputData.input_signature) {
+        unifiedSignatures.push({
+          id: 'server_input_signature',
+          url: outputData.input_signature,
+          signedBy: outputData.employee_name,
+          signedAt: outputData.input_date || new Date().toISOString(),
+          action: 'equipment_return',
+          isLocal: false
+        });
+      }
+
+      // Load local photos from IndexedDB
+      const localPhotos = await storageService.getPhotos(outputId);
+      const unifiedLocalPhotos = localPhotos
+        .filter(p => !p.uploaded)
+        .map(p => ({
+          id: p.id,
+          url: p.dataUrl,
+          uploadedAt: p.uploadedAt,
+          isLocal: true,
+          type: (outputData.input_date ? 'input' : 'output') as 'output' | 'input'
+        }));
+
+      // Load local signatures from IndexedDB
+      const localSignatures = await storageService.getSignatures(outputId);
+      const unifiedLocalSignatures = localSignatures
+        .filter(s => !s.uploaded)
+        .map(s => ({
+          id: s.id,
+          url: s.dataUrl,
+          signedBy: s.signedBy,
+          signedAt: s.signedAt,
+          action: s.action as 'equipment_output' | 'equipment_return',
+          isLocal: true
+        }));
+
+      // Merge server + local
+      setPhotos([...unifiedPhotos, ...unifiedLocalPhotos]);
+      setSignatures([...unifiedSignatures, ...unifiedLocalSignatures]);
+    } catch (error) {
+      console.error('Failed to load photos/signatures:', error);
+    }
   };
 
-  const handleSignatureCapture = () => {
-    signatureInputRef.current?.click();
+  const handlePhotoCapture = () => {
+    photoInputRef.current?.click();
   };
 
   const handlePhotoChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -63,25 +151,37 @@ export const HomeOfficeDetail: React.FC = () => {
 
     const reader = new FileReader();
     reader.onload = () => {
-      setInputPhoto(reader.result as string);
+      setInputPhotos(prev => [...prev, reader.result as string]);
     };
     reader.readAsDataURL(file);
+
+    // Reset input to allow multiple captures
+    event.target.value = '';
   };
 
-  const handleSignatureChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
+  const handleDeleteInputPhoto = (index: number) => {
+    setInputPhotos(prev => prev.filter((_, i) => i !== index));
+  };
 
-    const reader = new FileReader();
-    reader.onload = () => {
-      setInputSignature(reader.result as string);
-    };
-    reader.readAsDataURL(file);
+  const handleSignatureSave = (signature: string) => {
+    setInputSignature(signature);
+    setShowSignaturePad(false);
   };
 
   const handleSubmitReturn = async () => {
+    // Validate required fields
     if (!inputComments.trim()) {
       alert('Por favor agrega comentarios');
+      return;
+    }
+
+    if (inputPhotos.length === 0) {
+      alert('Por favor toma al menos una foto del equipo devuelto');
+      return;
+    }
+
+    if (!inputSignature) {
+      alert('Por favor firma la devolución');
       return;
     }
 
@@ -89,12 +189,23 @@ export const HomeOfficeDetail: React.FC = () => {
 
     try {
       setIsSubmitting(true);
+
+      // Update with first photo and signature
       await equipmentOutputService.updateEquipmentOutput(parseInt(id), {
         input_date: inputDate,
         input_comments: inputComments,
-        input_photo: inputPhoto || undefined,
-        input_signature: inputSignature || undefined
+        input_photo: inputPhotos[0],
+        input_signature: inputSignature
       });
+
+      // Save additional photos to IndexedDB if any
+      if (inputPhotos.length > 1) {
+        for (let i = 1; i < inputPhotos.length; i++) {
+          const blob = await fetch(inputPhotos[i]).then(r => r.blob());
+          const file = new File([blob], `return_photo_${i}.png`, { type: 'image/png' });
+          await storageService.savePhoto(parseInt(id), file);
+        }
+      }
 
       alert('¡Equipo marcado como devuelto exitosamente!');
       navigate('/dashboard');
@@ -156,20 +267,13 @@ export const HomeOfficeDetail: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
-      {/* Hidden file inputs */}
+      {/* Hidden file input for photos */}
       <input
         ref={photoInputRef}
         type="file"
         accept="image/*"
         capture="environment"
         onChange={handlePhotoChange}
-        className="hidden"
-      />
-      <input
-        ref={signatureInputRef}
-        type="file"
-        accept="image/*"
-        onChange={handleSignatureChange}
         className="hidden"
       />
 
@@ -222,14 +326,47 @@ export const HomeOfficeDetail: React.FC = () => {
               <p className="text-gray-900">{output.output_comments}</p>
             </div>
 
-            {output.output_photo && (
+            {/* Output Photos */}
+            {photos.filter(p => p.type === 'output').length > 0 && (
               <div>
-                <p className="text-sm text-gray-500 mb-2">Foto de salida:</p>
-                <img
-                  src={output.output_photo}
-                  alt="Output photo"
-                  className="w-full max-w-md h-48 object-cover rounded-lg border-2 border-gray-200"
-                />
+                <p className="text-sm text-gray-500 mb-2">Fotos de salida ({photos.filter(p => p.type === 'output').length}):</p>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                  {photos.filter(p => p.type === 'output').map((photo) => (
+                    <div key={photo.id} className="relative">
+                      <img
+                        src={photo.url}
+                        alt="Output photo"
+                        className="w-full h-32 object-cover rounded-lg border-2 border-gray-200"
+                      />
+                      {photo.isLocal && (
+                        <span className="absolute top-1 left-1 text-xs bg-yellow-100 text-yellow-800 px-1.5 py-0.5 rounded">
+                          Local
+                        </span>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Output Signature */}
+            {signatures.filter(s => s.action === 'equipment_output').length > 0 && (
+              <div>
+                <p className="text-sm text-gray-500 mb-2">Firma de salida:</p>
+                {signatures.filter(s => s.action === 'equipment_output').map((signature) => (
+                  <div key={signature.id} className="relative">
+                    <img
+                      src={signature.url}
+                      alt="Output signature"
+                      className="w-full max-w-md h-32 object-contain bg-gray-50 rounded-lg border-2 border-gray-200 p-2"
+                    />
+                    {signature.isLocal && (
+                      <span className="absolute top-1 left-1 text-xs bg-yellow-100 text-yellow-800 px-1.5 py-0.5 rounded">
+                        Local
+                      </span>
+                    )}
+                  </div>
+                ))}
               </div>
             )}
           </div>
@@ -253,25 +390,47 @@ export const HomeOfficeDetail: React.FC = () => {
                 </div>
               )}
 
-              {output.input_photo && (
+              {/* Input Photos */}
+              {photos.filter(p => p.type === 'input').length > 0 && (
                 <div>
-                  <p className="text-sm text-gray-500 mb-2">Foto de devolución:</p>
-                  <img
-                    src={output.input_photo}
-                    alt="Input photo"
-                    className="w-full max-w-md h-48 object-cover rounded-lg border-2 border-gray-200"
-                  />
+                  <p className="text-sm text-gray-500 mb-2">Fotos de devolución ({photos.filter(p => p.type === 'input').length}):</p>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                    {photos.filter(p => p.type === 'input').map((photo) => (
+                      <div key={photo.id} className="relative">
+                        <img
+                          src={photo.url}
+                          alt="Input photo"
+                          className="w-full h-32 object-cover rounded-lg border-2 border-gray-200"
+                        />
+                        {photo.isLocal && (
+                          <span className="absolute top-1 left-1 text-xs bg-yellow-100 text-yellow-800 px-1.5 py-0.5 rounded">
+                            Local
+                          </span>
+                        )}
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
 
-              {output.input_signature && (
+              {/* Input Signature */}
+              {signatures.filter(s => s.action === 'equipment_return').length > 0 && (
                 <div>
-                  <p className="text-sm text-gray-500 mb-2">Firma:</p>
-                  <img
-                    src={output.input_signature}
-                    alt="Signature"
-                    className="w-full max-w-md h-32 object-contain bg-gray-50 rounded-lg border-2 border-gray-200 p-2"
-                  />
+                  <p className="text-sm text-gray-500 mb-2">Firma de devolución:</p>
+                  {signatures.filter(s => s.action === 'equipment_return').map((signature) => (
+                    <div key={signature.id} className="relative">
+                      <img
+                        src={signature.url}
+                        alt="Return signature"
+                        className="w-full max-w-md h-32 object-contain bg-gray-50 rounded-lg border-2 border-gray-200 p-2"
+                      />
+                      {signature.isLocal && (
+                        <span className="absolute top-1 left-1 text-xs bg-yellow-100 text-yellow-800 px-1.5 py-0.5 rounded">
+                          Local
+                        </span>
+                      )}
+                    </div>
+                  ))}
                 </div>
               )}
             </div>
@@ -335,39 +494,51 @@ export const HomeOfficeDetail: React.FC = () => {
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Foto del equipo (opcional)
+                      Fotos del equipo *
                     </label>
-                    {inputPhoto ? (
-                      <div>
-                        <img
-                          src={inputPhoto}
-                          alt="Return photo"
-                          className="w-full max-w-md h-48 object-cover rounded-lg border-2 border-gray-200 mb-2"
-                        />
-                        <button
-                          onClick={() => setInputPhoto(null)}
-                          className="text-sm text-red-600 hover:text-red-700"
-                        >
-                          Eliminar foto
-                        </button>
+
+                    {/* Photo Grid */}
+                    {inputPhotos.length > 0 && (
+                      <div className="mb-3 grid grid-cols-2 md:grid-cols-3 gap-3">
+                        {inputPhotos.map((photo, index) => (
+                          <div key={index} className="relative group">
+                            <img
+                              src={photo}
+                              alt={`Foto ${index + 1}`}
+                              className="w-full h-32 object-cover rounded-lg border-2 border-gray-200"
+                            />
+                            <button
+                              onClick={() => handleDeleteInputPhoto(index)}
+                              className="absolute top-1 right-1 bg-red-500 text-white p-1.5 rounded-full shadow-lg hover:bg-red-600 transition-colors"
+                            >
+                              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                              </svg>
+                            </button>
+                          </div>
+                        ))}
                       </div>
-                    ) : (
-                      <button
-                        onClick={handlePhotoCapture}
-                        className="w-full py-8 border-2 border-dashed border-gray-300 rounded-lg hover:border-purple-400 transition-colors"
-                      >
-                        <svg className="w-10 h-10 text-gray-400 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
-                        </svg>
-                        <p className="text-sm text-gray-600">Toca para tomar foto</p>
-                      </button>
                     )}
+
+                    {/* Add Photo Button */}
+                    <button
+                      onClick={handlePhotoCapture}
+                      type="button"
+                      className="w-full py-6 border-2 border-dashed border-gray-300 rounded-lg hover:border-purple-400 transition-colors"
+                    >
+                      <svg className="w-8 h-8 text-gray-400 mx-auto mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                      </svg>
+                      <p className="text-xs text-gray-600">
+                        {inputPhotos.length > 0 ? 'Agregar otra foto' : 'Toca para tomar foto'}
+                      </p>
+                    </button>
                   </div>
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Firma (opcional)
+                      Firma *
                     </label>
                     {inputSignature ? (
                       <div>
@@ -377,6 +548,7 @@ export const HomeOfficeDetail: React.FC = () => {
                           className="w-full max-w-md h-32 object-contain bg-gray-50 rounded-lg border-2 border-gray-200 p-2 mb-2"
                         />
                         <button
+                          type="button"
                           onClick={() => setInputSignature(null)}
                           className="text-sm text-red-600 hover:text-red-700"
                         >
@@ -385,13 +557,14 @@ export const HomeOfficeDetail: React.FC = () => {
                       </div>
                     ) : (
                       <button
-                        onClick={handleSignatureCapture}
-                        className="w-full py-8 border-2 border-dashed border-gray-300 rounded-lg hover:border-purple-400 transition-colors"
+                        type="button"
+                        onClick={() => setShowSignaturePad(true)}
+                        className="w-full py-6 border-2 border-dashed border-gray-300 rounded-lg hover:border-purple-400 transition-colors"
                       >
-                        <svg className="w-10 h-10 text-gray-400 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className="w-8 h-8 text-gray-400 mx-auto mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
                         </svg>
-                        <p className="text-sm text-gray-600">Toca para agregar firma</p>
+                        <p className="text-xs text-gray-600">Toca para firmar digitalmente</p>
                       </button>
                     )}
                   </div>
@@ -406,7 +579,7 @@ export const HomeOfficeDetail: React.FC = () => {
                   </button>
                   <button
                     onClick={handleSubmitReturn}
-                    disabled={isSubmitting || !inputComments.trim()}
+                    disabled={isSubmitting || !inputComments.trim() || inputPhotos.length === 0 || !inputSignature}
                     className="flex-1 px-6 py-3 bg-purple-600 text-white rounded-lg font-medium hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                   >
                     {isSubmitting ? 'Guardando...' : 'Confirmar Devolución'}
@@ -417,6 +590,18 @@ export const HomeOfficeDetail: React.FC = () => {
           </div>
         )}
       </div>
+
+      {/* Signature Pad Modal */}
+      {showSignaturePad && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-lg w-full max-w-lg">
+            <SignaturePad
+              onSave={handleSignatureSave}
+              onClear={() => setShowSignaturePad(false)}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 };

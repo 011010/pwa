@@ -26,6 +26,9 @@ export const EmployeeDashboard: React.FC = () => {
   // Employee's active home office outputs
   const [homeOfficeOutputs, setHomeOfficeOutputs] = useState<EquipmentOutput[]>([]);
 
+  // Employee's upcoming home office outputs (7-day reminder)
+  const [upcomingOutputs, setUpcomingOutputs] = useState<EquipmentOutput[]>([]);
+
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'equipment' | 'homeoffice'>('equipment');
@@ -55,9 +58,30 @@ export const EmployeeDashboard: React.FC = () => {
 
       setMyEquipment(equipmentResponse.data);
 
-      // Filter only active outputs on client side
-      const activeOutputs = outputsResponse.data.filter(output => output.is_active);
+      // Get today's date in Y-m-d format
+      const today = new Date().toISOString().split('T')[0];
+
+      // Filter active outputs by date
+      const activeOutputs = outputsResponse.data.filter(output => {
+        if (!output.is_active) return false;
+        // Only show if output_date <= today
+        return output.output_date <= today;
+      });
+
+      // Calculate upcoming outputs (7-day reminder)
+      const upcomingList = outputsResponse.data.filter(output => {
+        if (!output.is_active) return false;
+
+        const outputDate = new Date(output.output_date);
+        const todayDate = new Date(today);
+        const daysUntil = Math.floor((outputDate.getTime() - todayDate.getTime()) / (1000 * 60 * 60 * 24));
+
+        // Show if 1-7 days in the future
+        return daysUntil > 0 && daysUntil <= 7;
+      });
+
       setHomeOfficeOutputs(activeOutputs);
+      setUpcomingOutputs(upcomingList);
     } catch (err: any) {
       console.error('[Employee Dashboard] Failed to fetch data:', err);
       setError(err.message || 'Failed to load your equipment');
@@ -231,6 +255,44 @@ export const EmployeeDashboard: React.FC = () => {
                     Crear Solicitud Home Office
                   </button>
                 </div>
+
+                {/* Upcoming Home Office Reminder */}
+                {upcomingOutputs.length > 0 && (
+                  <div className="mb-6 bg-blue-50 border-l-4 border-blue-500 rounded-lg p-4">
+                    <div className="flex items-start">
+                      <svg className="w-6 h-6 text-blue-500 mr-3 flex-shrink-0 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      <div className="flex-1">
+                        <h3 className="text-sm font-semibold text-blue-900 mb-2">
+                          Próximos Home Office ({upcomingOutputs.length})
+                        </h3>
+                        <p className="text-sm text-blue-700 mb-3">
+                          Tienes solicitudes programadas para los próximos 7 días
+                        </p>
+                        <div className="space-y-2">
+                          {upcomingOutputs.map(output => (
+                            <div
+                              key={output.id}
+                              className="bg-white rounded-lg p-3 shadow-sm cursor-pointer hover:shadow-md transition-shadow"
+                              onClick={() => handleViewOutput(output.id)}
+                            >
+                              <div className="flex justify-between items-start">
+                                <div>
+                                  <p className="font-medium text-gray-900">{output.equipment.name}</p>
+                                  <p className="text-sm text-gray-600">Serial: {output.equipment.serial_number}</p>
+                                </div>
+                                <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
+                                  {formatDate(output.output_date)}
+                                </span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
 
                 {homeOfficeOutputs.length > 0 ? (
                   <div className="grid gap-4 md:grid-cols-2">
