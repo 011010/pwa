@@ -10,7 +10,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { equipmentOutputService } from '../services/equipmentOutputService';
 import { ImagePreview } from '../components/ImagePreview';
 import type { EquipmentOutput } from '../types';
@@ -132,7 +132,7 @@ export const AdminEquipmentOutputDetail: React.FC = () => {
       await equipmentOutputService.updateEquipmentOutput(parseInt(id), {
         input_date: inputDate || new Date().toISOString().split('T')[0],
         input_comments: inputComments,
-        input_photo: inputPhoto || undefined,
+        input_photo: inputPhoto || '',
         input_signature: inputSignature || undefined
       });
 
