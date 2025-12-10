@@ -2,7 +2,7 @@
  * Create Home Office Component
  *
  * Allows employees to create a new home office equipment output.
- * Process: Select equipment → Add comments → Take photo → Submit
+ * Process: Select equipment → Add comments → Take photos → Sign → Submit
  */
 
 import React, { useState, useEffect, useRef } from 'react';
@@ -11,6 +11,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import { equipmentService } from '../services/equipmentService';
 import { equipmentOutputService } from '../services/equipmentOutputService';
+import { storageService } from '../services/storageService';
+import { SignaturePad } from '../components/SignaturePad';
 import type { EquipmentAssignment } from '../types';
 
 export const CreateHomeOffice: React.FC = () => {
@@ -23,7 +25,9 @@ export const CreateHomeOffice: React.FC = () => {
   const [selectedEquipmentId, setSelectedEquipmentId] = useState<number | null>(null);
   const [outputDate, setOutputDate] = useState(new Date().toISOString().split('T')[0]);
   const [comments, setComments] = useState('');
-  const [photo, setPhoto] = useState<string | null>(null);
+  const [photos, setPhotos] = useState<string[]>([]);
+  const [signature, setSignature] = useState<string | null>(null);
+  const [showSignaturePad, setShowSignaturePad] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -61,13 +65,25 @@ export const CreateHomeOffice: React.FC = () => {
     try {
       const reader = new FileReader();
       reader.onload = () => {
-        setPhoto(reader.result as string);
+        setPhotos(prev => [...prev, reader.result as string]);
       };
       reader.readAsDataURL(file);
+
+      // Reset input to allow multiple captures
+      event.target.value = '';
     } catch (err) {
       console.error('Failed to read photo:', err);
       alert('Error al cargar la foto');
     }
+  };
+
+  const handleDeletePhoto = (index: number) => {
+    setPhotos(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const handleSignatureSave = (signatureData: string) => {
+    setSignature(signatureData);
+    setShowSignaturePad(false);
   };
 
   const handleSubmit = async () => {
@@ -81,8 +97,13 @@ export const CreateHomeOffice: React.FC = () => {
       return;
     }
 
-    if (!photo) {
-      alert('Por favor toma una foto del equipo');
+    if (photos.length === 0) {
+      alert('Por favor toma al menos una foto del equipo');
+      return;
+    }
+
+    if (!signature) {
+      alert('Por favor firma la solicitud');
       return;
     }
 
@@ -99,7 +120,8 @@ export const CreateHomeOffice: React.FC = () => {
         employee_email: user.email,
         output_date: outputDate,
         output_comments: comments,
-        output_photo: photo
+        output_photo: photos[0],
+        output_signature: signature
       };
 
       console.log('[CreateHomeOffice] Creating equipment output:', {
@@ -107,12 +129,21 @@ export const CreateHomeOffice: React.FC = () => {
         employee_id: payload.employee_id,
         employee_email: payload.employee_email,
         output_date: payload.output_date,
-        hasPhoto: !!photo,
-        photoLength: photo?.length || 0,
-        photoPreview: photo ? photo.substring(0, 50) + '...' : 'no photo'
+        hasPhoto: !!photos[0],
+        hasSignature: !!signature,
+        totalPhotos: photos.length
       });
 
-      await equipmentOutputService.createEquipmentOutput(payload);
+      const createdOutput = await equipmentOutputService.createEquipmentOutput(payload);
+
+      // Save additional photos to IndexedDB if any
+      if (photos.length > 1) {
+        for (let i = 1; i < photos.length; i++) {
+          const blob = await fetch(photos[i]).then(r => r.blob());
+          const file = new File([blob], `output_photo_${i}.png`, { type: 'image/png' });
+          await storageService.savePhoto(createdOutput.id, file);
+        }
+      }
 
       alert('¡Solicitud de home office creada exitosamente!');
       navigate('/dashboard');
@@ -152,7 +183,7 @@ export const CreateHomeOffice: React.FC = () => {
             </button>
             <div>
               <h1 className="text-2xl font-bold">Nueva Solicitud Home Office</h1>
-              <p className="text-purple-100 text-sm">Paso {step} de 3</p>
+              <p className="text-purple-100 text-sm">Paso {step} de 4</p>
             </div>
           </div>
 
@@ -160,7 +191,7 @@ export const CreateHomeOffice: React.FC = () => {
           <div className="w-full bg-purple-800/30 rounded-full h-2">
             <div
               className="bg-white h-2 rounded-full transition-all duration-300"
-              style={{ width: `${(step / 3) * 100}%` }}
+              style={{ width: `${(step / 4) * 100}%` }}
             />
           </div>
         </div>
@@ -307,7 +338,7 @@ export const CreateHomeOffice: React.FC = () => {
             </motion.div>
           )}
 
-          {/* Step 3: Take Photo and Submit */}
+          {/* Step 3: Take Photos */}
           {step === 3 && (
             <motion.div
               key="step3"
@@ -317,38 +348,48 @@ export const CreateHomeOffice: React.FC = () => {
               className="bg-white rounded-lg shadow-sm p-6"
             >
               <h2 className="text-xl font-bold text-gray-900 mb-2">
-                Foto del equipo *
+                Fotos del equipo *
               </h2>
               <p className="text-gray-600 mb-6">
-                Toma una foto del estado actual del equipo
+                Toma fotos del estado actual del equipo (mínimo 1)
               </p>
 
-              {photo ? (
-                <div className="mb-6">
-                  <img
-                    src={photo}
-                    alt="Equipment photo"
-                    className="w-full h-64 object-cover rounded-lg border-2 border-gray-200"
-                  />
-                  <button
-                    onClick={() => setPhoto(null)}
-                    className="mt-3 text-sm text-red-600 hover:text-red-700 font-medium"
-                  >
-                    Eliminar foto
-                  </button>
+              {/* Photo Grid */}
+              {photos.length > 0 && (
+                <div className="mb-4 grid grid-cols-2 md:grid-cols-3 gap-3">
+                  {photos.map((photo, index) => (
+                    <div key={index} className="relative group">
+                      <img
+                        src={photo}
+                        alt={`Foto ${index + 1}`}
+                        className="w-full h-32 object-cover rounded-lg border-2 border-gray-200"
+                      />
+                      <button
+                        onClick={() => handleDeletePhoto(index)}
+                        className="absolute top-1 right-1 bg-red-500 text-white p-1.5 rounded-full shadow-lg hover:bg-red-600 transition-colors"
+                      >
+                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                    </div>
+                  ))}
                 </div>
-              ) : (
-                <button
-                  onClick={handlePhotoCapture}
-                  className="w-full mb-6 py-12 border-2 border-dashed border-gray-300 rounded-lg hover:border-purple-400 transition-colors group"
-                >
-                  <svg className="w-12 h-12 text-gray-400 group-hover:text-purple-500 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
-                  </svg>
-                  <p className="text-sm text-gray-600">Toca para tomar foto</p>
-                </button>
               )}
+
+              {/* Add Photo Button */}
+              <button
+                onClick={handlePhotoCapture}
+                className="w-full mb-6 py-8 border-2 border-dashed border-gray-300 rounded-lg hover:border-purple-400 transition-colors group"
+              >
+                <svg className="w-10 h-10 text-gray-400 group-hover:text-purple-500 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+                <p className="text-sm text-gray-600">
+                  {photos.length > 0 ? 'Agregar otra foto' : 'Toca para tomar foto'}
+                </p>
+              </button>
 
               <div className="flex gap-3">
                 <button
@@ -358,8 +399,68 @@ export const CreateHomeOffice: React.FC = () => {
                   Atrás
                 </button>
                 <button
+                  onClick={() => setStep(4)}
+                  disabled={photos.length === 0}
+                  className="flex-1 px-6 py-3 bg-purple-600 text-white rounded-lg font-medium hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  Continuar
+                </button>
+              </div>
+            </motion.div>
+          )}
+
+          {/* Step 4: Signature and Submit */}
+          {step === 4 && (
+            <motion.div
+              key="step4"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              className="bg-white rounded-lg shadow-sm p-6"
+            >
+              <h2 className="text-xl font-bold text-gray-900 mb-2">
+                Firma *
+              </h2>
+              <p className="text-gray-600 mb-6">
+                Firma digitalmente para confirmar la solicitud
+              </p>
+
+              {signature ? (
+                <div className="mb-6">
+                  <img
+                    src={signature}
+                    alt="Signature"
+                    className="w-full max-w-md mx-auto h-32 object-contain bg-gray-50 rounded-lg border-2 border-gray-200 p-2"
+                  />
+                  <button
+                    onClick={() => setSignature(null)}
+                    className="mt-3 text-sm text-red-600 hover:text-red-700 font-medium block mx-auto"
+                  >
+                    Eliminar firma
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={() => setShowSignaturePad(true)}
+                  className="w-full mb-6 py-8 border-2 border-dashed border-gray-300 rounded-lg hover:border-purple-400 transition-colors group"
+                >
+                  <svg className="w-10 h-10 text-gray-400 group-hover:text-purple-500 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                  </svg>
+                  <p className="text-sm text-gray-600">Toca para firmar digitalmente</p>
+                </button>
+              )}
+
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setStep(3)}
+                  className="flex-1 px-6 py-3 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200 transition-colors"
+                >
+                  Atrás
+                </button>
+                <button
                   onClick={handleSubmit}
-                  disabled={isLoading || !photo}
+                  disabled={!signature || isLoading}
                   className="flex-1 px-6 py-3 bg-purple-600 text-white rounded-lg font-medium hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
                   {isLoading ? 'Creando...' : 'Crear Solicitud'}
@@ -369,6 +470,18 @@ export const CreateHomeOffice: React.FC = () => {
           )}
         </AnimatePresence>
       </div>
+
+      {/* Signature Pad Modal */}
+      {showSignaturePad && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-lg w-full max-w-lg">
+            <SignaturePad
+              onSave={handleSignatureSave}
+              onClear={() => setShowSignaturePad(false)}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 };
