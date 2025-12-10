@@ -165,6 +165,7 @@ export const NewEquipmentOutput: React.FC = () => {
           output_comments: equipment.output_comments,
           output_date: outputDate,
           output_photo: '', // Added output_photo as an empty string
+          output_signature: '',
         })
       );
 
