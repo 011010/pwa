@@ -594,7 +594,7 @@ export const HomeOfficeDetail: React.FC = () => {
       {/* Signature Pad Modal */}
       {showSignaturePad && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-lg w-full max-w-lg">
+          <div className="bg-white rounded-lg w-full max-w-lg h-96 transition-colors">
             <SignaturePad
               onSave={handleSignatureSave}
               onClear={() => setShowSignaturePad(false)}
