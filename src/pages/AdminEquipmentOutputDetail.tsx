@@ -13,6 +13,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { equipmentOutputService } from '../services/equipmentOutputService';
 import { ImagePreview } from '../components/ImagePreview';
+import { SignaturePad } from '../components/SignaturePad';
 import type { EquipmentOutput } from '../types';
 
 export const AdminEquipmentOutputDetail: React.FC = () => {
@@ -20,7 +21,6 @@ export const AdminEquipmentOutputDetail: React.FC = () => {
   const navigate = useNavigate();
   const outputPhotoInputRef = useRef<HTMLInputElement>(null);
   const inputPhotoInputRef = useRef<HTMLInputElement>(null);
-  const signatureInputRef = useRef<HTMLInputElement>(null);
 
   const [output, setOutput] = useState<EquipmentOutput | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -38,6 +38,9 @@ export const AdminEquipmentOutputDetail: React.FC = () => {
 
   // Return form
   const [showReturnForm, setShowReturnForm] = useState(false);
+
+  // Signature pad modal
+  const [showSignaturePad, setShowSignaturePad] = useState(false);
 
   // Image preview
   const [previewImage, setPreviewImage] = useState<{ src: string; alt: string } | null>(null);
@@ -82,13 +85,12 @@ export const AdminEquipmentOutputDetail: React.FC = () => {
     }
   };
 
-  const handleCapturePhoto = (type: 'output' | 'input' | 'signature') => {
+  const handleCapturePhoto = (type: 'output' | 'input') => {
     if (type === 'output') outputPhotoInputRef.current?.click();
     else if (type === 'input') inputPhotoInputRef.current?.click();
-    else signatureInputRef.current?.click();
   };
 
-  const handlePhotoChange = (event: React.ChangeEvent<HTMLInputElement>, type: 'output' | 'input' | 'signature') => {
+  const handlePhotoChange = (event: React.ChangeEvent<HTMLInputElement>, type: 'output' | 'input') => {
     const file = event.target.files?.[0];
     if (!file) return;
 
@@ -97,9 +99,13 @@ export const AdminEquipmentOutputDetail: React.FC = () => {
       const base64 = reader.result as string;
       if (type === 'output') setOutputPhoto(base64);
       else if (type === 'input') setInputPhoto(base64);
-      else setInputSignature(base64);
     };
     reader.readAsDataURL(file);
+  };
+
+  const handleSignatureSave = (signature: string) => {
+    setInputSignature(signature);
+    setShowSignaturePad(false);
   };
 
   const handleSaveChanges = async () => {
@@ -214,13 +220,7 @@ export const AdminEquipmentOutputDetail: React.FC = () => {
         onChange={(e) => handlePhotoChange(e, 'input')}
         className="hidden"
       />
-      <input
-        ref={signatureInputRef}
-        type="file"
-        accept="image/*"
-        onChange={(e) => handlePhotoChange(e, 'signature')}
-        className="hidden"
-      />
+      
 
       {/* Header */}
       <div className="bg-gradient-to-r from-blue-600 to-blue-400 text-white">
@@ -453,12 +453,14 @@ export const AdminEquipmentOutputDetail: React.FC = () => {
                       {isEditing && (
                         <div className="flex gap-2">
                           <button
-                            onClick={() => handleCapturePhoto('signature')}
+                            type="button"
+                            onClick={() => setShowSignaturePad(true)}
                             className="text-sm text-blue-600 hover:text-blue-700 font-medium"
                           >
                             Cambiar firma
                           </button>
                           <button
+                            type="button"
                             onClick={() => setInputSignature(null)}
                             className="text-sm text-red-600 hover:text-red-700 font-medium"
                           >
@@ -469,13 +471,14 @@ export const AdminEquipmentOutputDetail: React.FC = () => {
                     </div>
                   ) : isEditing ? (
                     <button
-                      onClick={() => handleCapturePhoto('signature')}
+                      type="button"
+                      onClick={() => setShowSignaturePad(true)}
                       className="w-full py-8 border-2 border-dashed border-gray-300 rounded-lg hover:border-blue-400 transition-colors"
                     >
                       <svg className="w-10 h-10 text-gray-400 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
                       </svg>
-                      <p className="text-sm text-gray-600">Toca para agregar firma</p>
+                      <p className="text-sm text-gray-600">Toca para firmar digitalmente</p>
                     </button>
                   ) : (
                     <p className="text-sm text-gray-500">Sin firma</p>
@@ -551,7 +554,7 @@ export const AdminEquipmentOutputDetail: React.FC = () => {
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Firma (opcional)
+                      Firma *
                     </label>
                     {inputSignature ? (
                       <div>
@@ -561,6 +564,7 @@ export const AdminEquipmentOutputDetail: React.FC = () => {
                           className="w-full max-w-md h-32 object-contain bg-gray-50 rounded-lg border-2 border-gray-200 p-2 mb-2"
                         />
                         <button
+                          type="button"
                           onClick={() => setInputSignature(null)}
                           className="text-sm text-red-600 hover:text-red-700"
                         >
@@ -569,13 +573,14 @@ export const AdminEquipmentOutputDetail: React.FC = () => {
                       </div>
                     ) : (
                       <button
-                        onClick={() => handleCapturePhoto('signature')}
+                        type="button"
+                        onClick={() => setShowSignaturePad(true)}
                         className="w-full py-8 border-2 border-dashed border-gray-300 rounded-lg hover:border-blue-400 transition-colors"
                       >
                         <svg className="w-10 h-10 text-gray-400 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
                         </svg>
-                        <p className="text-sm text-gray-600">Toca para agregar firma</p>
+                        <p className="text-sm text-gray-600">Toca para firmar digitalmente</p>
                       </button>
                     )}
                   </div>
@@ -656,6 +661,18 @@ export const AdminEquipmentOutputDetail: React.FC = () => {
         isOpen={!!previewImage}
         onClose={() => setPreviewImage(null)}
       />
+
+      {/* Signature Pad Modal */}
+      {showSignaturePad && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-lg w-full max-w-lg h-96 transition-colors">
+            <SignaturePad
+              onSave={handleSignatureSave}
+              onClear={() => setShowSignaturePad(false)}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 };

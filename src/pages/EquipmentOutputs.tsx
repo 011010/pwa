@@ -10,6 +10,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { equipmentOutputService } from '../services/equipmentOutputService';
 import { BottomNav } from '../components/BottomNav';
+import { SignaturePad } from '../components/SignaturePad';
 import type { EquipmentOutput, EquipmentOutputStats } from '../types';
 
 export const EquipmentOutputs: React.FC = () => {
@@ -25,6 +26,8 @@ export const EquipmentOutputs: React.FC = () => {
   const [selectedOutput, setSelectedOutput] = useState<EquipmentOutput | null>(null);
   const [returnComments, setReturnComments] = useState('');
   const [returnPhoto, setReturnPhoto] = useState<string | null>(null);
+  const [returnSignature, setReturnSignature] = useState<string | null>(null);
+  const [showSignaturePad, setShowSignaturePad] = useState(false);
   const [isReturning, setIsReturning] = useState(false);
 
   useEffect(() => {
@@ -101,6 +104,7 @@ export const EquipmentOutputs: React.FC = () => {
     setSelectedOutput(output);
     setReturnComments('');
     setReturnPhoto(null);
+    setReturnSignature(null);
     setShowReturnModal(true);
   };
 
@@ -124,6 +128,11 @@ export const EquipmentOutputs: React.FC = () => {
     }
   };
 
+  const handleSignatureSave = (signature: string) => {
+    setReturnSignature(signature);
+    setShowSignaturePad(false);
+  };
+
   const handleReturnSubmit = async () => {
     if (!selectedOutput || !returnComments.trim()) {
       alert('Por favor agrega comentarios');
@@ -135,19 +144,25 @@ export const EquipmentOutputs: React.FC = () => {
       return;
     }
 
+    if (!returnSignature) {
+      alert('Por favor firma la devolución');
+      return;
+    }
+
     try {
       setIsReturning(true);
       await equipmentOutputService.updateEquipmentOutput(selectedOutput.id, {
         input_comments: returnComments,
         input_date: new Date().toISOString(),
         input_photo: returnPhoto,
-        input_signature: '',
+        input_signature: returnSignature,
       });
 
       setShowReturnModal(false);
       setSelectedOutput(null);
       setReturnComments('');
       setReturnPhoto(null);
+      setReturnSignature(null);
       fetchData();
     } catch (err: any) {
       console.error('Failed to mark as returned:', err);
@@ -475,6 +490,38 @@ export const EquipmentOutputs: React.FC = () => {
               )}
             </div>
 
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Digital Signature *
+              </label>
+              {returnSignature ? (
+                <div>
+                  <img
+                    src={returnSignature}
+                    alt="Signature"
+                    className="w-full max-w-md h-32 object-contain bg-gray-50 rounded-lg border-2 border-gray-200 p-2 mb-2"
+                  />
+                  <button
+                    onClick={() => setReturnSignature(null)}
+                    className="text-sm text-red-600 hover:text-red-700 font-medium"
+                  >
+                    Remove signature
+                  </button>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setShowSignaturePad(true)}
+                  className="w-full py-8 border-2 border-dashed border-gray-300 rounded-lg hover:border-blue-400 transition-colors group"
+                >
+                  <svg className="w-10 h-10 text-gray-400 group-hover:text-blue-500 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                  </svg>
+                  <p className="text-sm text-gray-600">Click to sign digitally</p>
+                </button>
+              )}
+            </div>
+
             <div className="flex gap-3">
               <button
                 onClick={() => setShowReturnModal(false)}
@@ -485,12 +532,24 @@ export const EquipmentOutputs: React.FC = () => {
               </button>
               <button
                 onClick={handleReturnSubmit}
-                disabled={isReturning || !returnComments.trim() || !returnPhoto}
+                disabled={isReturning || !returnComments.trim() || !returnPhoto || !returnSignature}
                 className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg font-medium hover:bg-red-700 transition-colors disabled:opacity-50"
               >
                 {isReturning ? 'Processing...' : 'Confirm Return'}
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Signature Pad Modal */}
+      {showSignaturePad && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-lg w-full max-w-lg h-96 transition-colors">
+            <SignaturePad
+              onSave={handleSignatureSave}
+              onClear={() => setShowSignaturePad(false)}
+            />
           </div>
         </div>
       )}
