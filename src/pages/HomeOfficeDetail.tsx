@@ -62,22 +62,24 @@ export const HomeOfficeDetail: React.FC = () => {
       const unifiedPhotos: UnifiedEquipmentOutputPhoto[] = [];
       const unifiedSignatures: UnifiedEquipmentOutputSignature[] = [];
 
-      // Load output (salida) photo from server
-      if (outputData.output_photo) {
+      // Load output (salida) photo from server - prioritize URL over base64
+      const outputPhotoUrl = outputData.output_photo_url || outputData.output_photo;
+      if (outputPhotoUrl) {
         unifiedPhotos.push({
           id: 'server_output_photo',
-          url: outputData.output_photo,
+          url: outputPhotoUrl,
           uploadedAt: outputData.output_date,
           isLocal: false,
           type: 'output'
         });
       }
 
-      // Load output signature from server
-      if (outputData.output_signature) {
+      // Load output signature from server - prioritize URL over base64
+      const outputSignatureUrl = outputData.output_signature_url || outputData.output_signature;
+      if (outputSignatureUrl) {
         unifiedSignatures.push({
           id: 'server_output_signature',
-          url: outputData.output_signature,
+          url: outputSignatureUrl,
           signedBy: outputData.employee_name,
           signedAt: outputData.output_date,
           action: 'equipment_output',
@@ -85,22 +87,24 @@ export const HomeOfficeDetail: React.FC = () => {
         });
       }
 
-      // Load input (devolución) photo from server
-      if (outputData.input_photo) {
+      // Load input (devolución) photo from server - prioritize URL over base64
+      const inputPhotoUrl = outputData.input_photo_url || outputData.input_photo;
+      if (inputPhotoUrl) {
         unifiedPhotos.push({
           id: 'server_input_photo',
-          url: outputData.input_photo,
+          url: inputPhotoUrl,
           uploadedAt: outputData.input_date || new Date().toISOString(),
           isLocal: false,
           type: 'input'
         });
       }
 
-      // Load input signature from server
-      if (outputData.input_signature) {
+      // Load input signature from server - prioritize URL over base64
+      const inputSignatureUrl = outputData.input_signature_url || outputData.input_signature;
+      if (inputSignatureUrl) {
         unifiedSignatures.push({
           id: 'server_input_signature',
-          url: outputData.input_signature,
+          url: inputSignatureUrl,
           signedBy: outputData.employee_name,
           signedAt: outputData.input_date || new Date().toISOString(),
           action: 'equipment_return',

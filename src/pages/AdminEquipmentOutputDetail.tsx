@@ -60,23 +60,28 @@ export const AdminEquipmentOutputDetail: React.FC = () => {
 
       console.log('[AdminEquipmentOutputDetail] Equipment output loaded:', {
         id: data.id,
-        hasOutputPhoto: !!data.output_photo,
-        outputPhotoLength: data.output_photo?.length || 0,
-        hasInputPhoto: !!data.input_photo,
-        inputPhotoLength: data.input_photo?.length || 0,
-        hasSignature: !!data.input_signature,
-        signatureLength: data.input_signature?.length || 0
+        hasOutputPhoto: !!(data.output_photo || data.output_photo_url),
+        outputPhotoUrl: data.output_photo_url,
+        hasOutputSignature: !!(data.output_signature || data.output_signature_url),
+        outputSignatureUrl: data.output_signature_url,
+        hasInputPhoto: !!(data.input_photo || data.input_photo_url),
+        inputPhotoUrl: data.input_photo_url,
+        hasInputSignature: !!(data.input_signature || data.input_signature_url),
+        inputSignatureUrl: data.input_signature_url
       });
+
+      // Log full data object to inspect backend response
+      console.log('[AdminEquipmentOutputDetail] Full data from backend:', data);
 
       setOutput(data);
 
-      // Initialize editable fields
+      // Initialize editable fields - prioritize URLs over base64
       setOutputComments(data.output_comments || '');
-      setOutputPhoto(data.output_photo);
+      setOutputPhoto(data.output_photo_url || data.output_photo);
       setInputComments(data.input_comments || '');
       setInputDate(data.input_date ? new Date(data.input_date).toISOString().split('T')[0] : '');
-      setInputPhoto(data.input_photo);
-      setInputSignature(data.input_signature);
+      setInputPhoto(data.input_photo_url || data.input_photo);
+      setInputSignature(data.input_signature_url || data.input_signature);
     } catch (err: any) {
       console.error('[AdminEquipmentOutputDetail] Failed to fetch equipment output:', err);
       setError(err.message || 'Failed to load equipment output');

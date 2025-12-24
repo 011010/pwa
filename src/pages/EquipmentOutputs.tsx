@@ -366,7 +366,7 @@ export const EquipmentOutputs: React.FC = () => {
 
                     {/* Photo indicators */}
                     <div className="mt-3 flex items-center gap-3 text-xs">
-                      {output.output_photo && (
+                      {(output.output_photo || output.output_photo_url) && (
                         <span className="flex items-center gap-1 text-green-600">
                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
@@ -375,7 +375,7 @@ export const EquipmentOutputs: React.FC = () => {
                           Foto salida
                         </span>
                       )}
-                      {output.input_photo && (
+                      {(output.input_photo || output.input_photo_url) && (
                         <span className="flex items-center gap-1 text-blue-600">
                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
@@ -384,7 +384,7 @@ export const EquipmentOutputs: React.FC = () => {
                           Foto entrada
                         </span>
                       )}
-                      {output.input_signature && (
+                      {(output.input_signature || output.input_signature_url) && (
                         <span className="flex items-center gap-1 text-purple-600">
                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
@@ -434,95 +434,99 @@ export const EquipmentOutputs: React.FC = () => {
       {/* Return Modal */}
       {showReturnModal && selectedOutput && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg max-w-md w-full p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Mark as Returned</h3>
+          <div className="bg-white rounded-lg max-w-md w-full max-h-[90vh] flex flex-col">
+            {/* Scrollable content area */}
+            <div className="flex-1 overflow-y-auto p-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Mark as Returned</h3>
 
-            <div className="mb-4 p-3 bg-gray-50 rounded-lg">
-              <p className="text-sm font-medium text-gray-900">{selectedOutput.equipment.name}</p>
-              <p className="text-xs text-gray-600">{selectedOutput.equipment.serial_number}</p>
-              <p className="text-xs text-gray-600 mt-1">{selectedOutput.employee.full_name}</p>
-            </div>
+              <div className="mb-4 p-3 bg-gray-50 rounded-lg">
+                <p className="text-sm font-medium text-gray-900">{selectedOutput.equipment.name}</p>
+                <p className="text-xs text-gray-600">{selectedOutput.equipment.serial_number}</p>
+                <p className="text-xs text-gray-600 mt-1">{selectedOutput.employee.full_name}</p>
+              </div>
 
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Return Comments *
-              </label>
-              <textarea
-                value={returnComments}
-                onChange={(e) => setReturnComments(e.target.value)}
-                placeholder="Describe the condition of the equipment when returned..."
-                rows={4}
-                maxLength={350}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-              <p className="text-xs text-gray-500 mt-1">{returnComments.length}/350 characters</p>
-            </div>
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Return Comments *
+                </label>
+                <textarea
+                  value={returnComments}
+                  onChange={(e) => setReturnComments(e.target.value)}
+                  placeholder="Describe the condition of the equipment when returned..."
+                  rows={4}
+                  maxLength={350}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+                <p className="text-xs text-gray-500 mt-1">{returnComments.length}/350 characters</p>
+              </div>
 
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Equipment Photo *
-              </label>
-              {returnPhoto ? (
-                <div>
-                  <img
-                    src={returnPhoto}
-                    alt="Return photo"
-                    className="w-full h-48 object-cover rounded-lg border-2 border-gray-200 mb-2"
-                  />
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Equipment Photo *
+                </label>
+                {returnPhoto ? (
+                  <div>
+                    <img
+                      src={returnPhoto}
+                      alt="Return photo"
+                      className="w-full h-48 object-cover rounded-lg border-2 border-gray-200 mb-2"
+                    />
+                    <button
+                      onClick={() => setReturnPhoto(null)}
+                      className="text-sm text-red-600 hover:text-red-700 font-medium"
+                    >
+                      Remove photo
+                    </button>
+                  </div>
+                ) : (
                   <button
-                    onClick={() => setReturnPhoto(null)}
-                    className="text-sm text-red-600 hover:text-red-700 font-medium"
+                    onClick={handlePhotoCapture}
+                    className="w-full py-8 border-2 border-dashed border-gray-300 rounded-lg hover:border-blue-400 transition-colors group"
                   >
-                    Remove photo
+                    <svg className="w-10 h-10 text-gray-400 group-hover:text-blue-500 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                    <p className="text-sm text-gray-600">Click to take photo</p>
                   </button>
-                </div>
-              ) : (
-                <button
-                  onClick={handlePhotoCapture}
-                  className="w-full py-8 border-2 border-dashed border-gray-300 rounded-lg hover:border-blue-400 transition-colors group"
-                >
-                  <svg className="w-10 h-10 text-gray-400 group-hover:text-blue-500 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
-                  </svg>
-                  <p className="text-sm text-gray-600">Click to take photo</p>
-                </button>
-              )}
-            </div>
+                )}
+              </div>
 
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Digital Signature *
-              </label>
-              {returnSignature ? (
-                <div>
-                  <img
-                    src={returnSignature}
-                    alt="Signature"
-                    className="w-full max-w-md h-32 object-contain bg-gray-50 rounded-lg border-2 border-gray-200 p-2 mb-2"
-                  />
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Digital Signature *
+                </label>
+                {returnSignature ? (
+                  <div>
+                    <img
+                      src={returnSignature}
+                      alt="Signature"
+                      className="w-full max-w-md h-32 object-contain bg-gray-50 rounded-lg border-2 border-gray-200 p-2 mb-2"
+                    />
+                    <button
+                      onClick={() => setReturnSignature(null)}
+                      className="text-sm text-red-600 hover:text-red-700 font-medium"
+                    >
+                      Remove signature
+                    </button>
+                  </div>
+                ) : (
                   <button
-                    onClick={() => setReturnSignature(null)}
-                    className="text-sm text-red-600 hover:text-red-700 font-medium"
+                    type="button"
+                    onClick={() => setShowSignaturePad(true)}
+                    className="w-full py-8 border-2 border-dashed border-gray-300 rounded-lg hover:border-blue-400 transition-colors group"
                   >
-                    Remove signature
+                    <svg className="w-10 h-10 text-gray-400 group-hover:text-blue-500 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                    </svg>
+                    <p className="text-sm text-gray-600">Click to sign digitally</p>
                   </button>
-                </div>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => setShowSignaturePad(true)}
-                  className="w-full py-8 border-2 border-dashed border-gray-300 rounded-lg hover:border-blue-400 transition-colors group"
-                >
-                  <svg className="w-10 h-10 text-gray-400 group-hover:text-blue-500 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                  </svg>
-                  <p className="text-sm text-gray-600">Click to sign digitally</p>
-                </button>
-              )}
+                )}
+              </div>
             </div>
 
-            <div className="flex gap-3">
+            {/* Fixed footer with action buttons */}
+            <div className="flex gap-3 p-6 pt-4 border-t border-gray-200 bg-white">
               <button
                 onClick={() => setShowReturnModal(false)}
                 disabled={isReturning}

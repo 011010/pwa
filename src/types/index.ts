@@ -184,12 +184,16 @@ export interface EquipmentOutput {
   employee_name: string;
   output_date: string;
   output_comments: string;
-  output_photo: string | null; // Base64 encoded image
-  output_signature: string | null; // Base64 encoded signature (NEW)
+  output_photo: string | null; // Base64 encoded image (legacy)
+  output_photo_url: string | null; // URL to photo file (NEW - preferred)
+  output_signature: string | null; // Base64 encoded signature (legacy)
+  output_signature_url: string | null; // URL to signature file (NEW - preferred)
   input_date: string | null;
   input_comments: string | null;
-  input_photo: string | null; // Base64 encoded image
-  input_signature: string | null; // Base64 encoded signature
+  input_photo: string | null; // Base64 encoded image (legacy)
+  input_photo_url: string | null; // URL to photo file (NEW - preferred)
+  input_signature: string | null; // Base64 encoded signature (legacy)
+  input_signature_url: string | null; // URL to signature file (NEW - preferred)
   is_active: boolean;
   equipment: EquipmentOutputEquipment;
   employee: EquipmentOutputEmployee;
